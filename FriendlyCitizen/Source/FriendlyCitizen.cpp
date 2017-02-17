@@ -1,6 +1,7 @@
 #include "FriendlyCitizen.h"
 #include <BWTA.h>
 #include <iostream>
+#include <cppunit/TestCase.h>
 
 using namespace BWAPI;
 using namespace Filter;
