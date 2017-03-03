@@ -1,9 +1,27 @@
 #include "ResourceManager.h"
+#include "InformationManager.h"
 #include <BWTA.h>
 #include <iostream>
+#include <vector>
 
 using namespace BWAPI;
 using namespace Filter;
+
+BWTA::BaseLocation* ResourceManager::mainBase;
+Unitset ResourceManager::mins;
+
+static int miningTimeConstant = 80;
+static std::vector<ResourceManager::mineralPatch> minPatches;
+
+void ResourceManager::onStart(){
+	mainBase = BWTA::getStartLocation(Broodwar->self());
+	mins = mainBase->getMinerals();
+	findMinPatches();
+	for (auto &m : minPatches){
+		Broodwar << m.unit->getID() << std::endl;
+	}
+	
+}
 
 void ResourceManager::onFrame(){
 	// Iterate through all the units that we own
@@ -119,4 +137,40 @@ void ResourceManager::onFrame(){
 		}
 
 	} // closure: unit iterator
+}
+
+void ResourceManager::drawMinCircles(){
+	for (const auto& mineral : mainBase->getStaticMinerals()) {
+		Broodwar->drawCircleMap(mineral->getInitialPosition(), 30, Colors::Cyan);
+	}
+}
+
+void ResourceManager::findMinPatches(){
+	for (const auto& mineral : mainBase->getStaticMinerals()) {
+		mineralPatch tempMinPatch;
+		tempMinPatch.unit = mineral;
+		minPatches.push_back(tempMinPatch);
+	}
+}
+
+int ResourceManager::workTime(mineralPatch m){
+	int w = 0;
+	for (int i = 0; i < m.workers.size(); i++){
+		w += workTime(m.workers[i], m , i);
+	}
+	return w;
+}
+
+int ResourceManager::workTime(Unit unit, mineralPatch m, int n){
+	int sum = 0;
+	if (n <= 0){
+		return sum;
+	}
+	else{
+		for (int i = 0; i <= n - 1; i++){
+			sum += workTime(m.workers[i],m,i);
+		}
+		return std::max(0, unit->getDistance(m.unit) - sum) + miningTimeConstant;
+	}
+	
 }

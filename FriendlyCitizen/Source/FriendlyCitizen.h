@@ -1,6 +1,9 @@
 #pragma once
 #include <BWAPI.h>
 #include <BWTA.h>
+#include <windows.h>
+
+DWORD WINAPI AnalyzeThread();
 
 // Remember not to use "Broodwar" in any global class constructor!
 
@@ -26,5 +29,6 @@ public:
 	virtual void onSaveGame(std::string gameName);
 	virtual void onUnitComplete(BWAPI::Unit unit);
 	// Everything below this line is safe to modify.
-
+	
+	void drawTerrainData();
 };
