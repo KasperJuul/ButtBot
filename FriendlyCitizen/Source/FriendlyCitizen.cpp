@@ -2,53 +2,37 @@
 #include <BWTA.h>
 #include <iostream>
 #include <cppunit/TestCase.h>
+#include "InformationManager.h"
 
 using namespace BWAPI;
 using namespace Filter;
 
+//Debug settings
+bool debug = true;
+bool defog = false;
+int optimisation = 2; //Using built-in bwapi optimisation
+
 void FriendlyCitizen::onStart()
 {
-	BWTA::readMap();
-	// Hello World!
-	Broodwar->sendText("Hello world!");
 
-	// Print the map name.
-	// BWAPI returns std::string when retrieving a string, don't forget to add .c_str() when printing!
-	Broodwar << "The map is " << Broodwar->mapName() << "!" << std::endl;
+	//Settings
+	if (debug){//Allows us to write commands
+		Broodwar->enableFlag(Flag::UserInput);
+	}
+	if (defog){//Allows our bot to attain an unfair information advantage
+		Broodwar->enableFlag(Flag::CompleteMapInformation);
+	}
+	Broodwar->setCommandOptimizationLevel(optimisation);//I've no idea
 
-	// Enable the UserInput flag, which allows us to control the bot and type messages.
-	Broodwar->enableFlag(Flag::UserInput);
-
-	// Uncomment the following line and the bot will know about everything through the fog of war (cheat).
-	//Broodwar->enableFlag(Flag::CompleteMapInformation);
-
-	// Set the command optimization level so that common commands can be grouped
-	// and reduce the bot's APM (Actions Per Minute).
-	Broodwar->setCommandOptimizationLevel(2);
-
-	// Check if this is a replay
-	if (Broodwar->isReplay())
+	if (Broodwar->isReplay())// Check if this is a replay
 	{
-		// Announce the players in the replay
-		Broodwar << "The following players are in this replay:" << std::endl;
-
-		// Iterate all the players in the game using a std:: iterator
-		Playerset players = Broodwar->getPlayers();
-		for (auto p : players)
-		{
-			// Only print the player if they are not an observer
-			if (!p->isObserver())
-				Broodwar << p->getName() << ", playing as " << p->getRace() << std::endl;
-		}
+		Broodwar << "FriendlyCitizen is spectating the game." << std::endl;
 	}
 	else // if this is not a replay
 	{
-		// Retrieve you and your enemy's races. enemy() will just return the first enemy.
-		// If you wish to deal with multiple enemies then you must use enemies().
-		if (Broodwar->enemy()) // First make sure there is an enemy
-			Broodwar << "The matchup is " << Broodwar->self()->getRace() << " vs " << Broodwar->enemy()->getRace() << std::endl;
+		Broodwar << "We are playing as" << Broodwar->self()->getRace() << std::endl;
+		InformationManager::StartAnalysis();
 	}
-
 }
 
 void FriendlyCitizen::onEnd(bool isWinner)
@@ -62,8 +46,6 @@ void FriendlyCitizen::onEnd(bool isWinner)
 
 void FriendlyCitizen::onFrame()
 {
-	// Called once every game frame
-
 	// Display the game frame rate as text in the upper left area of the screen
 	Broodwar->drawTextScreen(200, 0, "FPS: %d", Broodwar->getFPS());
 	Broodwar->drawTextScreen(200, 20, "Average FPS: %f", Broodwar->getAverageFPS());
@@ -217,7 +199,7 @@ void FriendlyCitizen::onPlayerLeft(BWAPI::Player player)
 	Broodwar->sendText("Goodbye %s!", player->getName().c_str());
 }
 
-void FriendlyCitizen::onNukeDetect(BWAPI::Position target)
+void FriendlyCitizen::onNukeDetect(BWAPI::Position target)//Infomanager low priority
 {
 
 	// Check if the target is a valid position

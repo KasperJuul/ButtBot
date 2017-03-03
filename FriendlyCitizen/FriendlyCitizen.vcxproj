@@ -94,9 +94,11 @@
   <ItemGroup>
     <ClCompile Include="Source\Dll.cpp" />
     <ClCompile Include="Source\FriendlyCitizen.cpp" />
+    <ClCompile Include="Source\InformationManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\FriendlyCitizen.h" />
+    <ClInclude Include="Source\InformationManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
