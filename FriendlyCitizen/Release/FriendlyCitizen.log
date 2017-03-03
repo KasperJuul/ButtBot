@@ -1,17 +1,19 @@
-﻿Build started 17-02-2017 11:03:48.
-     1>Project "D:\Repositories\Friendly-Citizen\FriendlyCitizen\FriendlyCitizen.vcxproj" on node 2 (Build target(s)).
+﻿Build started 03-03-2017 10:01:09.
+     1>Project "C:\Users\User\Desktop\FriendlyCitizenGit\Friendly-Citizen\FriendlyCitizen\FriendlyCitizen.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ID:\Libraries\BWAPI_412/include /ID:\Libraries\BWTAlib_2.2/include /I"C:\cppunit-1.12.1\include" /Zi /nologo /W3 /WX- /MP /O2 /Oi /Oy- /GL /D NOMINMAX /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D _WINDLL /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Source\FriendlyCitizen.cpp
-         FriendlyCitizen.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Program Files\Libraries\BWAPI_412/include" /I"C:\Program Files\Libraries\BWTAlib_2.2/include" /I"C:\cppunit-1.12.1\include" /Zi /nologo /W3 /WX- /MP /O2 /Oi /Oy- /GL /D NOMINMAX /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D _WINDLL /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Source\InformationManager.cpp
+         InformationManager.cpp
+     1>c:\users\user\desktop\friendlycitizengit\friendly-citizen\friendlycitizen\source\InformationManager.h(17): warning C4091: 'static ' : ignored on left of 'InformationManager' when no variable is declared
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\Repositories\Friendly-Citizen\Release\FriendlyCitizen.dll" /INCREMENTAL:NO /NOLOGO /LIBPATH:"C:\cppunit-1.12.1\lib" D:\Libraries\BWAPI_412/lib/BWAPI.lib D:\Libraries\BWTAlib_2.2/lib/BWTA.lib "D:\Libraries\BWTAlib_2.2/lib/libboost_filesystem-vc120-mt-1_56.lib" "D:\Libraries\BWTAlib_2.2/lib/libboost_system-vc120-mt-1_56.lib" "D:\Libraries\BWTAlib_2.2/lib/libboost_thread-vc120-mt-1_56.lib" "D:\Libraries\BWTAlib_2.2/lib/libCGAL-vc120-mt-4.4.lib" "D:\Libraries\BWTAlib_2.2/lib/libgmp-10.lib" "D:\Libraries\BWTAlib_2.2/lib/libmpfr-4.lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\Repositories\Friendly-Citizen\Release\FriendlyCitizen.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"Release\FriendlyCitizen.lib" /MACHINE:X86 /SAFESEH /DLL Release\Dll.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\User\Desktop\FriendlyCitizenGit\Friendly-Citizen\Release\FriendlyCitizen.dll" /INCREMENTAL:NO /NOLOGO /LIBPATH:"C:\cppunit-1.12.1\lib" "C:\Program Files\Libraries\BWAPI_412/lib/BWAPI.lib" "C:\Program Files\Libraries\BWTAlib_2.2/lib/BWTA.lib" "C:\Program Files\Libraries\BWTAlib_2.2/lib/libboost_filesystem-vc120-mt-1_56.lib" "C:\Program Files\Libraries\BWTAlib_2.2/lib/libboost_system-vc120-mt-1_56.lib" "C:\Program Files\Libraries\BWTAlib_2.2/lib/libboost_thread-vc120-mt-1_56.lib" "C:\Program Files\Libraries\BWTAlib_2.2/lib/libCGAL-vc120-mt-4.4.lib" "C:\Program Files\Libraries\BWTAlib_2.2/lib/libgmp-10.lib" "C:\Program Files\Libraries\BWTAlib_2.2/lib/libmpfr-4.lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\User\Desktop\FriendlyCitizenGit\Friendly-Citizen\Release\FriendlyCitizen.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"Release\FriendlyCitizen.lib" /MACHINE:X86 /SAFESEH /DLL Release\Dll.obj
          Release\FriendlyCitizen.obj
+         Release\InformationManager.obj
             Creating library Release\FriendlyCitizen.lib and object Release\FriendlyCitizen.exp
          Generating code
          Finished generating code
-         FriendlyCitizen.vcxproj -> D:\Repositories\Friendly-Citizen\Release\FriendlyCitizen.dll
-     1>Done Building Project "D:\Repositories\Friendly-Citizen\FriendlyCitizen\FriendlyCitizen.vcxproj" (Build target(s)).
+         FriendlyCitizen.vcxproj -> C:\Users\User\Desktop\FriendlyCitizenGit\Friendly-Citizen\Release\FriendlyCitizen.dll
+     1>Done Building Project "C:\Users\User\Desktop\FriendlyCitizenGit\Friendly-Citizen\FriendlyCitizen\FriendlyCitizen.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:05.76
+Time Elapsed 00:00:45.17
