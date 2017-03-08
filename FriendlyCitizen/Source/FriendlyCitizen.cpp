@@ -9,6 +9,7 @@ using namespace BWAPI;
 using namespace Filter;
 
 //Debug settings
+bool dbg_mode = true;
 bool debug = true;
 bool defog = false;
 int optimisation = 2; //Using built-in bwapi optimisation
@@ -58,6 +59,10 @@ void FriendlyCitizen::onFrame()
 	// Display the game frame rate as text in the upper left area of the screen
 	Broodwar->drawTextScreen(200, 0, "FPS: %d", Broodwar->getFPS());
 	Broodwar->drawTextScreen(200, 20, "Average FPS: %f", Broodwar->getAverageFPS());
+
+	Broodwar->drawTextScreen(20, 0, "Supply used: %d", Broodwar->self()->supplyUsed() / 2 );
+	Broodwar->drawTextScreen(20, 20, "Supply total: %d", BWAPI::Broodwar->self()->supplyTotal() / 2 );
+	
 	ResourceManager::drawMinCircles();
 
 	// Return if the game is a replay or is paused
@@ -205,6 +210,15 @@ void FriendlyCitizen::onSendText(std::string text)
 			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AnalyzeThread, NULL, 0, NULL);
 		}
 	}
+	else if (text == "/dbgmode"){
+		dbg_mode = !dbg_mode;
+		if (dbg_mode){
+			Broodwar << "Debug mode ON" << std::endl;;
+		}
+		else{
+			Broodwar << "Debug mode OFF" << std::endl;;
+		}
+	}
 	else {
 		// Send the text to the game if it is not being processed.
 		Broodwar->sendText("%s", text.c_str());
@@ -310,6 +324,17 @@ void FriendlyCitizen::onSaveGame(std::string gameName)
 
 void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 {
+	if (dbg_mode){
+		Broodwar <<  unit->getType().getName() << " completed and ready!" << std::endl;
+	}
+	if (BWAPI::Broodwar->self()->supplyUsed() + 4 >= BWAPI::Broodwar->self()->supplyTotal())
+	{
+		UnitType supplyProviderType = unit->getType().getRace().getSupplyProvider();
+		TilePosition targetBuildLocation = Broodwar->getBuildLocation(supplyProviderType, unit->getTilePosition());
+		unit->build(supplyProviderType, targetBuildLocation);
+		Broodwar << "Worker is building supply unit" << std::endl;
+	}
+
 }
 
 DWORD WINAPI AnalyzeThread()

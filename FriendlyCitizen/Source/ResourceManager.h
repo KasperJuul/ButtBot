@@ -17,6 +17,7 @@ public:
 		};	
 	static void onStart();
 	static void onFrame();
+	static void buildPylonsNProbes();
 	static void drawMinCircles();
 	static void findMinPatches();
 

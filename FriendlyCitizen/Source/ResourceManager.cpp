@@ -60,9 +60,8 @@ void ResourceManager::onFrame(){
 				{
 					u->returnCargo();
 				}
-				else if (!u->getPowerUp())  // The worker cannot harvest anything if it
-				{                             // is carrying a powerup such as a flag
-					// Harvest from the nearest mineral patch or gas refinery
+				else if (!u->getPowerUp())  // The worker cannot harvest anything if it is carrying a powerup such as a flag
+				{       					// Harvest from the nearest mineral patch or gas refinery
 					if (!u->gather(u->getClosestUnit(IsMineralField || IsRefinery)))
 					{
 						// If the call fails, then print the last error message
@@ -71,9 +70,15 @@ void ResourceManager::onFrame(){
 
 				} // closure: has no powerup
 			} // closure: if idle
-
 		}
-		else if (u->getType().isResourceDepot()) // A resource depot is a Command Center, Nexus, or Hatchery
+	} // closure: unit iterator
+	buildPylonsNProbes();
+}
+
+void ResourceManager::buildPylonsNProbes(){
+	for (auto &u : Broodwar->self()->getUnits())
+	{
+		if (u->getType().isResourceDepot()) // A resource depot is a Command Center, Nexus, or Hatchery
 		{
 
 			// Order the depot to construct more workers! But only when it is idle.
@@ -135,8 +140,7 @@ void ResourceManager::onFrame(){
 			} // closure: failed to train idle unit
 
 		}
-
-	} // closure: unit iterator
+	}
 }
 
 void ResourceManager::drawMinCircles(){
@@ -163,14 +167,10 @@ int ResourceManager::workTime(mineralPatch m){
 
 int ResourceManager::workTime(Unit unit, mineralPatch m, int n){
 	int sum = 0;
-	if (n <= 0){
-		return sum;
-	}
-	else{
+	if (n > 0){
 		for (int i = 0; i <= n - 1; i++){
-			sum += workTime(m.workers[i],m,i);
+			sum += workTime(m.workers[i], m, i);
 		}
-		return std::max(0, unit->getDistance(m.unit) - sum) + miningTimeConstant;
 	}
-	
+	return std::max(0, unit->getDistance(m.unit) - sum) + miningTimeConstant;
 }
