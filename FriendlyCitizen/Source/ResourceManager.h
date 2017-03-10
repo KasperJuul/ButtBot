@@ -11,6 +11,10 @@
 class ResourceManager
 {
 public:
+	struct workerUnit{
+		BWAPI::Unit unit;
+		std::string status;
+	};
 	struct mineralPatch{
 			BWAPI::Unit unit;
 			std::deque<BWAPI::Unit> workers;
@@ -21,15 +25,20 @@ public:
 	static void drawMinCircles();
 	static void findMinPatches();
 
+	static void stdGather();
+	static void queueGather();
+
+	static void ResourceManager::queueManager();
 
 	static int workTime(mineralPatch m);
 	static int workTime(BWAPI::Unit unit, mineralPatch m, int n);
-	static int workTime(std::deque<BWAPI::Unit> q);
+	static int roundTrip(BWAPI::Unit u , mineralPatch m);
+	static mineralPatch* roundTrip_min(BWAPI::Unit u, std::vector<ResourceManager::mineralPatch>* patches);
 
 	
 
-	
+	static std::vector<ResourceManager::mineralPatch> minPatches;
+	static std::vector<ResourceManager::workerUnit> ResourceManager::wrkUnits;
 	static BWTA::BaseLocation* mainBase;
-	static BWAPI::Unitset mins;
 };
 
