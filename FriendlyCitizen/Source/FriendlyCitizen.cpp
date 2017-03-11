@@ -14,7 +14,7 @@ int optimisation = 2; //Using built-in bwapi optimisation
 
 void FriendlyCitizen::onStart()
 {
-
+		
 	//Settings
 	if (debug){//Allows us to write commands
 		Broodwar->enableFlag(Flag::UserInput);
