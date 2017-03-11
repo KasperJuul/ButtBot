@@ -13,7 +13,8 @@ class ResourceManager
 public:
 	struct workerUnit{
 		BWAPI::Unit unit;
-		std::string status;
+		BWAPI::Unit mineral;
+		std::string status;		// Idle, Mining, Returning Cargo, Waiting,
 	};
 	struct mineralPatch{
 			BWAPI::Unit unit;
@@ -28,7 +29,8 @@ public:
 	static void stdGather();
 	static void queueGather();
 
-	static void ResourceManager::queueManager();
+	static void queueManager();
+	static void queueManager2();
 
 	static int workTime(mineralPatch m);
 	static int workTime(BWAPI::Unit unit, mineralPatch m, int n);

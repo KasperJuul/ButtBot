@@ -40,7 +40,8 @@ void FriendlyCitizen::onStart()
 		InformationManager::StartAnalysis();
 		ResourceManager::onStart();
 	}
-	
+	Broodwar->setLocalSpeed(111);
+
 	analyzed = false;
 	analysis_just_finished = false;
 }
@@ -73,6 +74,13 @@ void FriendlyCitizen::onFrame()
 			Broodwar->drawTextMap(u->getPosition(),"%d", u->getID());
 		}
 	}
+	std::string w = "Workers:";
+	for (int i = 0; i < ResourceManager::wrkUnits.size(); i++){
+		w += " [" + std::to_string(ResourceManager::wrkUnits.at(i).unit->getID()) + "]";
+		Position po = Position(ResourceManager::wrkUnits.at(i).unit->getPosition().x - 10, ResourceManager::wrkUnits.at(i).unit->getPosition().y - 10);
+		Broodwar->drawTextMap(po, ResourceManager::wrkUnits.at(i).status.c_str());
+	}
+	Broodwar->drawTextScreen(20, 30, w.c_str());
 
 	//Broodwar->drawTextScreen(20, 40, "M1: %d %d", ResourceManager::minPatches.at(0).workers[0]->getID(), ResourceManager::minPatches.at(0).workers[1]->getID());
 	//Broodwar->drawTextScreen(20, 50, "M2: %d", ResourceManager::minPatches.at(1).workers[0]->getID());
@@ -226,13 +234,11 @@ void FriendlyCitizen::onSaveGame(std::string gameName)
 
 void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 {
-
-	if (BWAPI::Broodwar->self()->supplyUsed() + 4 >= BWAPI::Broodwar->self()->supplyTotal())
-	{
-		UnitType supplyProviderType = unit->getType().getRace().getSupplyProvider();
-		TilePosition targetBuildLocation = Broodwar->getBuildLocation(supplyProviderType, unit->getTilePosition());
-		unit->build(supplyProviderType, targetBuildLocation);
-		Broodwar << "Worker is building supply unit" << std::endl;
+	if (unit->getType().isWorker()){
+		ResourceManager::workerUnit temp;
+		temp.unit = unit;
+		temp.status = "Idle";
+		ResourceManager::wrkUnits.push_back(temp);
 	}
 
 }

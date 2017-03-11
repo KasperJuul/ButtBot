@@ -9,7 +9,7 @@ using namespace Filter;
 
 BWTA::BaseLocation* ResourceManager::mainBase;
 
-static int miningTimeConstant = 80;
+static int miningTimeConstant = 150;
 std::vector<ResourceManager::mineralPatch> ResourceManager::minPatches;
 std::vector<ResourceManager::workerUnit> ResourceManager::wrkUnits;
 
@@ -22,7 +22,7 @@ void ResourceManager::onStart(){
 		crystals.at(i)->getID();		
 	}
 	*/
-	for (int i = 0; i < minPatches.size(); i++){
+	for (unsigned int i = 0; i < minPatches.size(); i++){
 		Broodwar << minPatches.at(i).unit->getType().toString()<< " " << minPatches.at(i).unit->getID() << std::endl;
 	}
 
@@ -41,7 +41,7 @@ void ResourceManager::onStart(){
 void ResourceManager::onFrame(){
 	//stdGather();
 	//queueGather();
-	queueManager();
+	queueManager2();
 	buildPylonsNProbes();
 }
 
@@ -183,6 +183,62 @@ void ResourceManager::drawMinCircles(){
 	}
 }
 
+void ResourceManager::queueManager2(){
+	for (unsigned int i = 0; i < wrkUnits.size(); i++){
+		std::string sts = wrkUnits.at(i).status;
+		if (sts == "Idle"){
+			mineralPatch* temp = roundTrip_min(wrkUnits.at(i).unit, &minPatches);
+			temp->workers.push_back(wrkUnits.at(i).unit);
+			wrkUnits.at(i).status = "In Queue";
+			wrkUnits.at(i).mineral = temp->unit;
+		}
+		else if (sts == "In Queue"){
+			wrkUnits.at(i).unit->move(wrkUnits.at(i).mineral->getPosition());
+			wrkUnits.at(i).status = "Moving";
+		}
+		else if (sts == "Moving"){
+			if (!wrkUnits.at(i).unit->isMoving()){
+				wrkUnits.at(i).status = "Waiting";
+			}
+		}
+		else if (sts == "Waiting"){
+			bool myTurn = false;
+			for (auto m : minPatches){
+				if (m.unit == wrkUnits.at(i).mineral){
+					if (m.workers.front() == wrkUnits.at(i).unit){
+						myTurn = true;
+					}
+					break;
+				}
+
+			}
+			if (myTurn){
+				wrkUnits.at(i).unit->gather(wrkUnits.at(i).mineral);
+				wrkUnits.at(i).status = "Mining";
+			}
+		}
+		else if (sts == "Mining"){
+			if (wrkUnits.at(i).unit->isCarryingMinerals()){
+				for (auto &m : minPatches){
+					if (m.unit == wrkUnits.at(i).mineral){
+						m.workers.pop_front();
+						break;
+					}
+				}
+				wrkUnits.at(i).unit->returnCargo();
+				wrkUnits.at(i).status = "Returning Cargo";
+			}
+		}
+		else if (sts == "Returning Cargo"){
+			if (!wrkUnits.at(i).unit->isCarryingMinerals()){
+				wrkUnits.at(i).unit->stop();
+				wrkUnits.at(i).status = "Idle";
+			}
+		}
+		
+	}
+}
+
 //Queue maintanance
 void ResourceManager::queueManager(){
 	for (auto &u : Broodwar->self()->getUnits())
@@ -224,88 +280,20 @@ void ResourceManager::queueManager(){
 }
 
 //Queue gather function
-/*
+
 void ResourceManager::queueGather(){
-	for (auto &u : Broodwar->self()->getUnits())
-	{
-		// Ignore the unit if it no longer exists
-		// Make sure to include this block when handling any Unit pointer!
-		if (!u->exists())
-			continue;
+	for (unsigned int i = 0; i < minPatches.size(); i++){
+		if (minPatches.at(i).workers.front()->isGatheringMinerals()){
 
-		// Ignore the unit if it has one of the following status ailments
-		if (u->isLockedDown() || u->isMaelstrommed() || u->isStasised())
-			continue;
-
-		// Ignore the unit if it is in one of the following states
-		if (u->isLoaded() || !u->isPowered() || u->isStuck())
-			continue;
-
-		// Ignore the unit if it is incomplete or busy constructing
-		if (!u->isCompleted() || u->isConstructing())
-			continue;
-
-		// If the unit is a worker unit
-		if (u->getType().isWorker())
-		{
-			// if our worker is idle
-			if (!u->isGatheringMinerals() && u->isCarryingMinerals()){
-				u->returnCargo();
-			}
-			else if (!u->isCarryingMinerals() && !u->isGatheringMinerals())
-			{
-				mineralPatch patch = roundTrip_min(u, minPatches);
-				for (auto m : minPatches){
-					if (m.unit == patch.unit){
-						m.workers.push_back(u);
-
-						break;
-					}
-				}
-				u->move
-			}
-			else if (u->isGatheringMinerals())
-			{
-				Unit patch = u->getLastCommand().getTarget();
-				for (auto m : minPatches){
-					if (m.unit == patch){
-						m.workers.pop_front();
-						break;
-					}
-				}
-			}
-
-
-
-			if (u->isIdle())
-			{
-				// Order workers carrying a resource to return them to the center,
-				// otherwise find a mineral patch to harvest.
-
-				if (u->isCarryingMinerals())
-				{
-					u->returnCargo();
-				}
-				else if (!u->getPowerUp())  // The worker cannot harvest anything if it is carrying a powerup such as a flag
-				{       					// Harvest from the nearest mineral patch or gas refinery
-					mineralPatch patch = roundTrip_min(u, minPatches);
-					patch.workers.push_back(u);
-					u->move(patch);
-					u->
-
-
-				} // closure: has no powerup
-			} // closure: if idle
 		}
 	}
 }
-*/
 
 
 // Waiting time and Roundtrip calcutaions
 int ResourceManager::workTime(mineralPatch m){
 	int w = 0;
-	for (int i = 0; i < m.workers.size(); i++){
+	for (unsigned int i = 0; i < m.workers.size(); i++){
 		w += workTime(m.workers[i], m , i);
 	}
 	return w;
