@@ -206,6 +206,7 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 {
+
 }
 
 void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)

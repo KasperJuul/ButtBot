@@ -18,23 +18,6 @@ static std::vector<Unit> crystals;
 void ResourceManager::onStart(){
 	mainBase = BWTA::getStartLocation(Broodwar->self());
 	findMinPatches();
-	/*for (int i = 0; i < crystals.size(); i++){
-		crystals.at(i)->getID();		
-	}
-	*/
-	for (unsigned int i = 0; i < minPatches.size(); i++){
-		Broodwar << minPatches.at(i).unit->getType().toString()<< " " << minPatches.at(i).unit->getID() << std::endl;
-	}
-
-	//for (auto &u : Broodwar->self()->getUnits()){
-	//	if (u->getType().isWorker() && minPatches.at(0).workers.size() < 2){
-	//		minPatches.at(0).workers.push_back(u);
-	//	}
-	//	else if (u->getType().isWorker()){
-	//		minPatches.at(1).workers.push_back(u);
-	//	}
-
-	//}
 	
 }
 
