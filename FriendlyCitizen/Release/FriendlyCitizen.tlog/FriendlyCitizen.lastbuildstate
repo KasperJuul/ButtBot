@@ -1,2 +1,6 @@
 #TargetFrameworkVersion=v4.0:PlatformToolSet=v120:EnableManagedIncrementalBuild=false:VCToolArchitecture=Native32Bit
+<<<<<<< HEAD
 Release|Win32|D:\DTU\BachelorProjekt\FriendlyCitizen\|
+=======
+Release|Win32|C:\Users\User\Desktop\FriendlyCitizenGit\FriendlyCitizen\|
+>>>>>>> refs/remotes/origin/master
