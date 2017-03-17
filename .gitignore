@@ -214,3 +214,13 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+*.sdf
+*.suo
+*.vcxproj
+FriendlyCitizen/Release/Debug.obj
+*.lib
+FriendlyCitizen/Release/FriendlyCitizen.log
+*.exp
+*.tlog
+*.pdb
+*.dll

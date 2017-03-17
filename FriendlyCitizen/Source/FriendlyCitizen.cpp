@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cppunit/TestCase.h>
 #include "InformationManager.h"
+#include "IntelManager.h"
 
 using namespace BWAPI;
 using namespace Filter;
@@ -14,8 +15,10 @@ int optimisation = 2; //Using built-in bwapi optimisation
 
 void FriendlyCitizen::onStart()
 {
-		
+	BWTA::analyze();
+	BWTA::readMap();
 	//Settings
+	Broodwar->setLocalSpeed(56);
 	if (debug){//Allows us to write commands
 		Broodwar->enableFlag(Flag::UserInput);
 	}
@@ -30,9 +33,13 @@ void FriendlyCitizen::onStart()
 	}
 	else // if this is not a replay
 	{
-		Broodwar << "We are playing as" << Broodwar->self()->getRace() << std::endl;
-		InformationManager::StartAnalysis();
+		Broodwar << "We are playing as " << Broodwar->self()->getRace() << std::endl;
+		//Setup functions
+		InformationManager::StartAnalysis();//MUST be first!
+		IntelManager::StartScouting();
 	}
+
+
 }
 
 void FriendlyCitizen::onEnd(bool isWinner)
@@ -54,10 +61,15 @@ void FriendlyCitizen::onFrame()
 	if (Broodwar->isReplay() || Broodwar->isPaused() || !Broodwar->self())
 		return;
 
+	//Graphical functions might have to go before latency frames in order to avoid stuttering.
+
 	// Prevent spamming by only running our onFrame once every number of latency frames.
 	// Latency frames are the number of frames before commands are processed.
 	if (Broodwar->getFrameCount() % Broodwar->getLatencyFrames() != 0)
 		return;
+
+	//Onframe functionality.
+	IntelManager::ScoutOnFrame();
 
 	// Iterate through all the units that we own
 	for (auto &u : Broodwar->self()->getUnits())
@@ -81,7 +93,6 @@ void FriendlyCitizen::onFrame()
 
 
 		// Finally make the unit do some stuff!
-
 
 		// If the unit is a worker unit
 		if (u->getType().isWorker())
