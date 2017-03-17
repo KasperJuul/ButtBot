@@ -23,6 +23,7 @@ void FriendlyCitizen::onStart()
 {
 	BWTA::analyze();
 	BWTA::readMap();
+
 	//Settings
 	if (debug){//Allows us to write commands
 		Broodwar->enableFlag(Flag::UserInput);

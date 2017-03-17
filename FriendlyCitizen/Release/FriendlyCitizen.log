@@ -1,8 +1,8 @@
-﻿Build started 17-03-2017 11:25:03.
+﻿Build started 17-03-2017 12:40:53.
      1>Project "D:\DTU\BachelorProjekt\FriendlyCitizen\FriendlyCitizen\FriendlyCitizen.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ID:\Libraries\BWAPI_412/include /ID:\Libraries\BWTAlib_2.2/include /I"C:\cppunit-1.12.1\include" /Zi /nologo /W3 /WX- /MP /O2 /Oi /Oy- /GL /D NOMINMAX /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D _WINDLL /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Source\ResourceManager.cpp
-         ResourceManager.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ID:\Libraries\BWAPI_412/include /ID:\Libraries\BWTAlib_2.2/include /I"C:\cppunit-1.12.1\include" /Zi /nologo /W3 /WX- /MP /O2 /Oi /Oy- /GL /D NOMINMAX /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D EXAMPLEAIMODULE_EXPORTS /D _WINDLL /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Source\FriendlyCitizen.cpp
+         FriendlyCitizen.cpp
      1>d:\dtu\bachelorprojekt\friendlycitizen\friendlycitizen\source\Debug.h(14): warning C4091: 'static ' : ignored on left of 'Debug' when no variable is declared
      1>d:\dtu\bachelorprojekt\friendlycitizen\friendlycitizen\source\InformationManager.h(14): warning C4091: 'static ' : ignored on left of 'TechNode' when no variable is declared
      1>d:\dtu\bachelorprojekt\friendlycitizen\friendlycitizen\source\InformationManager.h(28): warning C4091: 'static ' : ignored on left of 'InformationManager' when no variable is declared
@@ -20,4 +20,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:06.45
+Time Elapsed 00:00:06.50
