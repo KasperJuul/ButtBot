@@ -1,5 +1,6 @@
 #include "ResourceManager.h"
 #include "InformationManager.h"
+#include "Debug.h"
 #include <BWTA.h>
 #include <iostream>
 #include <vector>
@@ -9,11 +10,10 @@ using namespace Filter;
 
 BWTA::BaseLocation* ResourceManager::mainBase;
 
-static int miningTimeConstant = 150;
+std::string ResourceManager::log = "";
+static int miningTimeConstant = 80;
 std::vector<ResourceManager::mineralPatch> ResourceManager::minPatches;
 std::vector<ResourceManager::workerUnit> ResourceManager::wrkUnits;
-
-static std::vector<Unit> crystals;
 
 void ResourceManager::onStart(){
 	mainBase = BWTA::getStartLocation(Broodwar->self());
@@ -29,13 +29,15 @@ void ResourceManager::onFrame(){
 }
 
 void ResourceManager::findMinPatches(){
+	int itr = 0;
 	for (auto m : Broodwar->getMinerals()){
 		if (mainBase->getRegion()->getPolygon().isInside(m->getPosition())){
-			crystals.push_back(m);
 			mineralPatch temp;
 			temp.unit = m;
+			temp.name = "M" + std::to_string(itr);
 			temp.workers.clear();
 			minPatches.push_back(temp);
+			itr++;
 		}
 	}
 	
@@ -97,9 +99,11 @@ void ResourceManager::buildPylonsNProbes(){
 	{
 		if (u->getType().isResourceDepot()) // A resource depot is a Command Center, Nexus, or Hatchery
 		{
+			if (wrkUnits.size() > 25){
 
+			}
 			// Order the depot to construct more workers! But only when it is idle.
-			if (u->isIdle() && !u->train(u->getType().getRace().getWorker()))
+			else if (u->isIdle() && !u->train(u->getType().getRace().getWorker()))
 			{
 				// If that fails, draw the error at the location so that you can visibly see what went wrong!
 				// However, drawing the error once will only appear for a single frame
@@ -169,45 +173,41 @@ void ResourceManager::drawMinCircles(){
 void ResourceManager::queueManager2(){
 	for (unsigned int i = 0; i < wrkUnits.size(); i++){
 		std::string sts = wrkUnits.at(i).status;
+		
+		if (wrkUnits.at(i).unit->isConstructing()){
+			continue;
+		}
 		if (sts == "Idle"){
+			log += "Calculating round trip for Worker[" + std::to_string(i) + "] : \n";
 			mineralPatch* temp = roundTrip_min(wrkUnits.at(i).unit, &minPatches);
 			temp->workers.push_back(wrkUnits.at(i).unit);
 			wrkUnits.at(i).status = "In Queue";
-			wrkUnits.at(i).mineral = temp->unit;
+			wrkUnits.at(i).mineral = temp;
+			log += "Worker[" + std::to_string(i) + "] queued at " + temp->name + "\n";
 		}
-		else if (sts == "In Queue"){
-			wrkUnits.at(i).unit->move(wrkUnits.at(i).mineral->getPosition());
-			wrkUnits.at(i).status = "Moving";
-		}
-		else if (sts == "Moving"){
-			if (!wrkUnits.at(i).unit->isMoving()){
+		if (sts == "In Queue"){
+			if (wrkUnits.at(i).mineral->workers.front() == wrkUnits.at(i).unit){
+				wrkUnits.at(i).unit->gather(wrkUnits.at(i).mineral->unit);
+				wrkUnits.at(i).status = "Mining";
+			}
+			else{
+				wrkUnits.at(i).unit->follow(wrkUnits.at(i).mineral->workers.front());
 				wrkUnits.at(i).status = "Waiting";
 			}
+			
 		}
 		else if (sts == "Waiting"){
-			bool myTurn = false;
-			for (auto m : minPatches){
-				if (m.unit == wrkUnits.at(i).mineral){
-					if (m.workers.front() == wrkUnits.at(i).unit){
-						myTurn = true;
-					}
-					break;
-				}
-
-			}
-			if (myTurn){
-				wrkUnits.at(i).unit->gather(wrkUnits.at(i).mineral);
+			if (wrkUnits.at(i).mineral->workers.front() == wrkUnits.at(i).unit){
+				wrkUnits.at(i).unit->gather(wrkUnits.at(i).mineral->unit);
 				wrkUnits.at(i).status = "Mining";
+			}
+			else {
+				wrkUnits.at(i).unit->move(wrkUnits.at(i).mineral->workers.front()->getPosition());
 			}
 		}
 		else if (sts == "Mining"){
 			if (wrkUnits.at(i).unit->isCarryingMinerals()){
-				for (auto &m : minPatches){
-					if (m.unit == wrkUnits.at(i).mineral){
-						m.workers.pop_front();
-						break;
-					}
-				}
+				wrkUnits.at(i).mineral->workers.pop_front();
 				wrkUnits.at(i).unit->returnCargo();
 				wrkUnits.at(i).status = "Returning Cargo";
 			}
@@ -216,6 +216,9 @@ void ResourceManager::queueManager2(){
 			if (!wrkUnits.at(i).unit->isCarryingMinerals()){
 				wrkUnits.at(i).unit->stop();
 				wrkUnits.at(i).status = "Idle";
+			}
+			if (wrkUnits.at(i).unit->isIdle()){
+				wrkUnits.at(i).unit->returnCargo();
 			}
 		}
 		
@@ -286,16 +289,33 @@ int ResourceManager::workTime(Unit unit, mineralPatch m, int n){
 	int sum = 0;
 	if (n > 0){
 		for (int i = 0; i <= n - 1; i++){
-			sum += workTime(m.workers[i], m, i);
+			sum += workTime2(m.workers[i], m, i);
 		}
 	}
-	return std::max(0, unit->getDistance(m.unit) - sum) + miningTimeConstant;
+	int dist = (int) ((unit->getDistance(m.unit)) / (unit->getType().topSpeed()));
+	int W = std::max(0, dist - sum) + miningTimeConstant;
+	log += "	Work(W) = MAX(0, " + std::to_string(dist) + " - " + std::to_string(sum) + ") + " + std::to_string(miningTimeConstant) + " = " + std::to_string(W) + "\n";
+	return W;
+}
+
+int ResourceManager::workTime2(Unit unit, mineralPatch m, int n){
+	int sum = 0;
+	if (n > 0){
+		for (int i = 0; i <= n - 1; i++){
+			sum += workTime2(m.workers[i], m, i);
+		}
+	}
+	int dist = (int)((unit->getDistance(m.unit)) / (unit->getType().topSpeed()));
+	return std::max(0, dist - sum) + miningTimeConstant;
 }
 
 int ResourceManager::roundTrip(Unit unit, mineralPatch m){
-	int distance_UtoM = unit->getDistance(m.unit);
-	int distance_MtoD = (m.unit)->getDistance(InformationManager::firstNexus);
-	int R = distance_UtoM + std::max(0, workTime(m) - distance_UtoM) + miningTimeConstant + distance_MtoD;
+	int distance_UtoM = (int)((unit->getDistance(m.unit)) / (unit->getType().topSpeed()));
+	int distance_MtoD = (int)((m.unit)->getDistance(InformationManager::firstNexus) / (unit->getType().topSpeed()));
+	int derp = workTime(m);
+	int R = distance_UtoM + std::max(0, derp - distance_UtoM) + miningTimeConstant + distance_MtoD;
+
+	log += "	R(W,M) = " + std::to_string(distance_UtoM) + " + MAX(0, " + std::to_string(derp) + " - " + std::to_string(distance_UtoM) + ") + " + std::to_string(miningTimeConstant) + " + " + std::to_string(distance_MtoD) + " = " + std::to_string(R) + "\n";
 	return R;
 }
 

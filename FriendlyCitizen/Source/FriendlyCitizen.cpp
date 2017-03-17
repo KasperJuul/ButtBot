@@ -14,6 +14,8 @@ bool debug = true;
 bool defog = false;
 int optimisation = 2; //Using built-in bwapi optimisation
 
+std::string FriendlyCitizen::minelog = "";
+
 bool analyzed;
 bool analysis_just_finished;
 
@@ -40,7 +42,7 @@ void FriendlyCitizen::onStart()
 		InformationManager::StartAnalysis();
 		ResourceManager::onStart();
 	}
-	Broodwar->setLocalSpeed(111);
+	Broodwar->setLocalSpeed(56);
 
 	analyzed = false;
 	analysis_just_finished = false;
@@ -48,6 +50,8 @@ void FriendlyCitizen::onStart()
 
 void FriendlyCitizen::onEnd(bool isWinner)
 {
+	Debug::writeLog(ResourceManager::log, "QueueLog", "Logs");
+	Debug::writeLog(FriendlyCitizen::minelog, "minLog", "Logs");
 	// Called when the game ends
 	if (isWinner)
 	{
@@ -61,9 +65,15 @@ void FriendlyCitizen::onFrame()
 	Broodwar->drawTextScreen(200, 0, "FPS: %d", Broodwar->getFPS());
 	Broodwar->drawTextScreen(200, 20, "Average FPS: %f", Broodwar->getAverageFPS());
 
-	for (int i = 0; i < ResourceManager::minPatches.size(); i++){
+	if (Broodwar->getFrameCount() % 40 == 0){
+		minelog += std::to_string(Broodwar->getFrameCount()) +
+				   ", " + std::to_string(Broodwar->self()->gatheredMinerals()) +
+				   ", " + std::to_string(ResourceManager::wrkUnits.size()) + "\n";
+	}
+
+	for (unsigned int i = 0; i < ResourceManager::minPatches.size(); i++){
 		std::string s = "M" + std::to_string(i) + ": ";
-		for (int j = 0; j < ResourceManager::minPatches.at(i).workers.size(); j++){
+		for (unsigned int j = 0; j < ResourceManager::minPatches.at(i).workers.size(); j++){
 			s += "[" + std::to_string(ResourceManager::minPatches.at(i).workers.at(j)->getID()) + "] ";
 		}
 		Broodwar->drawTextScreen(20, 40 + (i*10), s.c_str());
@@ -75,7 +85,7 @@ void FriendlyCitizen::onFrame()
 		}
 	}
 	std::string w = "Workers:";
-	for (int i = 0; i < ResourceManager::wrkUnits.size(); i++){
+	for (unsigned int i = 0; i < ResourceManager::wrkUnits.size(); i++){
 		w += " [" + std::to_string(ResourceManager::wrkUnits.at(i).unit->getID()) + "]";
 		Position po = Position(ResourceManager::wrkUnits.at(i).unit->getPosition().x - 10, ResourceManager::wrkUnits.at(i).unit->getPosition().y - 10);
 		Broodwar->drawTextMap(po, ResourceManager::wrkUnits.at(i).status.c_str());
