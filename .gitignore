@@ -123,6 +123,7 @@ DocProject/Help/html
 
 # Click-Once directory
 publish/
+release/
 
 # Publish Web Output
 *.Publish.xml
@@ -215,5 +216,17 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 *.sdf
+<<<<<<< HEAD
+*.suo
+*.vcxproj
+FriendlyCitizen/Release/Debug.obj
+*.lib
+FriendlyCitizen/Release/FriendlyCitizen.log
+*.exp
+*.tlog
+*.pdb
+*.dll
+=======
 *.sdf
 FriendlyCitizen.sdf
+>>>>>>> efaa3ab7f6b8a21076c45c011b163b1c2940688c
