@@ -94,13 +94,66 @@ void ResourceManager::stdGather(){
 	} // closure: unit iterator
 }
 
+void ResourceManager::buildPylonsNProbes2(){
+	if (InformationManager::firstCenter->isIdle() && wrkUnits.size() < 26){
+		if (!InformationManager::firstCenter->train(InformationManager::firstCenter->getType().getRace().getWorker())){
+			Position pos = InformationManager::firstCenter->getPosition();
+			Error lastErr = Broodwar->getLastError();
+			Broodwar->registerEvent([pos, lastErr](Game*){ Broodwar->drawTextMap(pos, "%c%s", Text::White, lastErr.c_str()); },   // action
+				nullptr,    // condition
+				Broodwar->getLatencyFrames());  // frames to run
+		}
+	}
+	if ((Broodwar->self()->supplyTotal() / 2) - (Broodwar->self()->supplyUsed() / 2) <= 3){
+		if (InformationManager::ourRace == Races::Enum::Protoss || InformationManager::ourRace == Races::Enum::Terran){
+			UnitType supplyProviderType = InformationManager::ourRace.getSupplyProvider();
+			Unit supplyBuilder = wrkUnits.at(1).unit;
+			bool foundUnit = false;
+			//for (auto w : wrkUnits){
+			//	if (w.status == "Idle"){
+			//		supplyBuilder = w.unit;
+			//		foundUnit = true;
+			//		break;
+			//	}
+			//}
+			if (foundUnit){
+				TilePosition targetBuildLocation = Broodwar->getBuildLocation(supplyProviderType, supplyBuilder->getTilePosition());
+				if (targetBuildLocation){
+					// Register an event that draws the target build location
+					Broodwar->registerEvent([targetBuildLocation, supplyProviderType](Game*)
+					{
+						Broodwar->drawBoxMap(Position(targetBuildLocation),
+						Position(targetBuildLocation + supplyProviderType.tileSize()),
+						Colors::Blue);
+					},
+						nullptr,  // condition
+						supplyProviderType.buildTime() + 100);  // frames to run
+
+					// Order the builder to construct the supply structure
+					supplyBuilder->build(supplyProviderType, targetBuildLocation);
+				}
+			}
+		}
+		else{
+			UnitType supplyProviderType = InformationManager::ourRace.getSupplyProvider();
+			Unit supplyBuilder = InformationManager::firstCenter->getClosestUnit(GetType == supplyProviderType.whatBuilds().first &&
+				(IsIdle || IsGatheringMinerals) &&
+				IsOwned);
+			if (supplyBuilder){
+				// Train the supply provider (Overlord) if the provider is not a structure
+				supplyBuilder->train(supplyProviderType);
+			}
+		}
+	}
+}
+
 void ResourceManager::buildPylonsNProbes(){
 	for (auto &u : Broodwar->self()->getUnits())
 	{
 		if (u->getType().isResourceDepot()) // A resource depot is a Command Center, Nexus, or Hatchery
 		{
 			if (wrkUnits.size() > 25){
-
+				
 			}
 			// Order the depot to construct more workers! But only when it is idle.
 			else if (u->isIdle() && !u->train(u->getType().getRace().getWorker()))
@@ -311,7 +364,7 @@ int ResourceManager::workTime2(Unit unit, mineralPatch m, int n){
 
 int ResourceManager::roundTrip(Unit unit, mineralPatch m){
 	int distance_UtoM = (int)((unit->getDistance(m.unit)) / (unit->getType().topSpeed()));
-	int distance_MtoD = (int)((m.unit)->getDistance(InformationManager::firstNexus) / (unit->getType().topSpeed()));
+	int distance_MtoD = (int)((m.unit)->getDistance(InformationManager::firstCenter) / (unit->getType().topSpeed()));
 	int derp = workTime(m);
 	int R = distance_UtoM + std::max(0, derp - distance_UtoM) + miningTimeConstant + distance_MtoD;
 

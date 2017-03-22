@@ -23,7 +23,7 @@ public:
 	static Race ourRace;
 	//static UnitType::set ourUnitTypes; //Catalogues the unit types that we currently have. To be added later
 	//static std::vector<Unit> ourUnits; //Catalogues our units. To be added later
-	static Unit firstNexus; //Swap out with better, generalized functionality later
+	static Unit firstCenter; //Swap out with better, generalized functionality later
 	static std::vector<Unit> firstWorkers; //Swap out with better, generalized functionality later
 };
 

@@ -45,7 +45,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BWAPI_DIR)/include;$(BWTA_DIR)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NOMINMAX;WIN32;_DEBUG;_WINDOWS;_USRDLL;EXAMPLEAIMODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -92,6 +92,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\BuildingPlacer.cpp" />
     <ClCompile Include="Source\Debug.cpp" />
     <ClCompile Include="Source\Dll.cpp" />
     <ClCompile Include="Source\FriendlyCitizen.cpp" />
@@ -99,6 +100,7 @@
     <ClCompile Include="Source\ResourceManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\BuildingPlacer.h" />
     <ClInclude Include="Source\Debug.h" />
     <ClInclude Include="Source\FriendlyCitizen.h" />
     <ClInclude Include="Source\InformationManager.h" />
