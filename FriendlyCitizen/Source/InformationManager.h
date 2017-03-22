@@ -48,6 +48,7 @@ public:
 
 	//Information - Static
 	static Race ourRace;
+<<<<<<< HEAD
 	static std::vector<TechNode> ourTech;
 	static Race theirRace;
 	static std::vector<TechNode> theirTech;
@@ -58,8 +59,10 @@ public:
 
 	//Depcrecated - To be refactored.
 	static Unit firstNexus; //Swap out with better, generalized functionality later
+=======
 	//static UnitType::set ourUnitTypes; //Catalogues the unit types that we currently have. To be added later
 	//static std::vector<Unit> ourUnits; //Catalogues our units. To be added later
 	static Unit firstCenter; //Swap out with better, generalized functionality later
+>>>>>>> 93d571c2b9f95d3a50527d08eaf2410bc7e385fd
 	static std::vector<Unit> firstWorkers; //Swap out with better, generalized functionality later
 };
