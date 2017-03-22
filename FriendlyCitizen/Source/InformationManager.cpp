@@ -6,7 +6,7 @@
 using namespace BWAPI;
 
 Race InformationManager::ourRace;
-Unit InformationManager::firstNexus; //Swap out with better, generalized functionality later
+Unit InformationManager::firstCenter; //Swap out with better, generalized functionality later
 std::vector<Unit> InformationManager::firstWorkers; //Swap out with better, generalized functionality later
 bool InformationManager::enemyFound;
 bool InformationManager::enemyBaseFound;
@@ -92,7 +92,7 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 
 	for (auto &u : Broodwar->self()->getUnits()){//Early functionality to quickly get vital data for other sections of the code
 		if (InformationManager::ourRace.getCenter() == u->getType()){
-			InformationManager::firstNexus = u;
+			InformationManager::firstCenter = u;
 		}
 		else if (InformationManager::ourRace.getWorker() == u->getType()){
 			InformationManager::firstWorkers.push_back(u);
@@ -100,7 +100,7 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	}
 
 	//debug-init
-	std::string testAbove = InformationManager::firstNexus->getType().getName();//Tests if the above works. Manual test: See that the printed name equates the base type
+	std::string testAbove = InformationManager::firstCenter->getType().getName();//Tests if the above works. Manual test: See that the printed name equates the base type
 	Broodwar->sendText(testAbove.c_str());
 
 	std::string testTech = tempNodes.at(0).selfType.toString();

@@ -27,6 +27,7 @@ public:
 	static void onStart();
 	static void onFrame();
 	static void buildPylonsNProbes();
+	static void buildPylonsNProbes2();
 	static void drawMinCircles();
 	static void findMinPatches();
 
