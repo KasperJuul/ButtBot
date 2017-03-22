@@ -216,6 +216,7 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 *.sdf
+<<<<<<< HEAD
 *.suo
 *.vcxproj
 FriendlyCitizen/Release/Debug.obj
@@ -225,3 +226,7 @@ FriendlyCitizen/Release/FriendlyCitizen.log
 *.tlog
 *.pdb
 *.dll
+=======
+*.sdf
+FriendlyCitizen.sdf
+>>>>>>> efaa3ab7f6b8a21076c45c011b163b1c2940688c
