@@ -26,7 +26,7 @@ void ResourceManager::onFrame(){
 	//stdGather();
 	//queueGather();
 	queueManager2();
-	buildPylonsNProbes();
+	//buildPylonsNProbes();
 }
 
 void ResourceManager::findMinPatches(){
@@ -231,7 +231,14 @@ void ResourceManager::queueManager2(){
 		if (wrkUnits.at(i).unit->isConstructing()){
 			continue;
 		}
+		if (sts == "Building" && !wrkUnits.at(i).unit->isConstructing()){
+			wrkUnits.at(i).status = "Idle";
+		}
 		if (sts == "Idle"){
+			if (wrkUnits.at(i).unit->isCarryingMinerals()){
+				wrkUnits.at(i).status = "In Queue";
+				continue;
+			}
 			log += "Calculating round trip for Worker[" + std::to_string(i) + "] : \n";
 			mineralPatch* temp = roundTrip_min(wrkUnits.at(i).unit, &minPatches);
 			temp->workers.push_back(wrkUnits.at(i).unit);

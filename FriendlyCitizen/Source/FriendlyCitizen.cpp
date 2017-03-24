@@ -5,6 +5,7 @@
 #include "InformationManager.h"
 #include "ResourceManager.h"
 #include "IntelManager.h"
+#include "BuildingPlacer.h"
 
 using namespace BWAPI;
 using namespace Filter;
@@ -46,7 +47,7 @@ void FriendlyCitizen::onStart()
 		analyzed = false;
 		analysis_just_finished = false;
 	}
-	Broodwar->setLocalSpeed(56);
+	Broodwar->setLocalSpeed(41);
 }
 
 void FriendlyCitizen::onEnd(bool isWinner)
@@ -122,6 +123,7 @@ void FriendlyCitizen::onFrame()
 		return;
 	
 	//Onframe functionality.
+	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
 	//IntelManager::ScoutOnFrame();
 }
@@ -254,6 +256,9 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 		temp.unit = unit;
 		temp.status = "Idle";
 		ResourceManager::wrkUnits.push_back(temp);
+	}
+	if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
+		BuildingPlacer::supplyProviderIsBeingBuild = false;
 	}
 
 }
