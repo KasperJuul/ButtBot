@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-static class Debug
+class Debug
 {
 public:
 	static void writeLog(std::string message, std::string fileName, std::string folderName);
