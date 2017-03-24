@@ -22,6 +22,7 @@ void ResourceManager::onStart(){
 }
 
 void ResourceManager::onFrame(){
+
 	//stdGather();
 	//queueGather();
 	queueManager2();
