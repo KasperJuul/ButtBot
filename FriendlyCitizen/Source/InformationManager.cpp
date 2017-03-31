@@ -14,6 +14,7 @@ bool InformationManager::initialScoutDestroyed;
 std::vector<TechNode> InformationManager::ourTech;
 Race InformationManager::theirRace;
 std::vector<TechNode> InformationManager::theirTech;
+std::vector<BWTA::BaseLocation*> InformationManager::baseLocations;
 std::set<UnitStatus> InformationManager::ourUnits; //Catalogues the units we have
 std::set<UnitType> InformationManager::ourUnitTypes; //Catalogues the unittypes we have
 
@@ -138,6 +139,11 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 		temp.state = UnitState::FREE;
 		InformationManager::ourUnits.insert(temp);
 		InformationManager::ourUnitTypes.insert(u->getType());
+	}
+
+	//Getting the baselocations
+	for (auto &b : BWTA::getBaseLocations()){
+		baseLocations.push_back(b);
 	}
 }
 

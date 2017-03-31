@@ -1,5 +1,6 @@
 #include "ResourceManager.h"
 #include "InformationManager.h"
+#include "BuildingPlacer.h"
 #include "Debug.h"
 #include <BWTA.h>
 #include <iostream>
@@ -14,6 +15,7 @@ std::string ResourceManager::log = "";
 static int miningTimeConstant = 80;
 std::vector<ResourceManager::mineralPatch> ResourceManager::minPatches;
 std::vector<ResourceManager::workerUnit> ResourceManager::wrkUnits;
+std::vector<BWAPI::Unit> ResourceManager::centers;
 
 void ResourceManager::onStart(){
 	mainBase = BWTA::getStartLocation(Broodwar->self());
@@ -23,9 +25,8 @@ void ResourceManager::onStart(){
 
 void ResourceManager::onFrame(){
 
-	//stdGather();
-	//queueGather();
-	queueManager2();
+	stdGather();
+	//queueManager();
 	//buildPylonsNProbes();
 }
 
@@ -95,65 +96,12 @@ void ResourceManager::stdGather(){
 	} // closure: unit iterator
 }
 
-void ResourceManager::buildPylonsNProbes2(){
-	if (InformationManager::firstCenter->isIdle() && wrkUnits.size() < 26){
-		if (!InformationManager::firstCenter->train(InformationManager::firstCenter->getType().getRace().getWorker())){
-			Position pos = InformationManager::firstCenter->getPosition();
-			Error lastErr = Broodwar->getLastError();
-			Broodwar->registerEvent([pos, lastErr](Game*){ Broodwar->drawTextMap(pos, "%c%s", Text::White, lastErr.c_str()); },   // action
-				nullptr,    // condition
-				Broodwar->getLatencyFrames());  // frames to run
-		}
-	}
-	if ((Broodwar->self()->supplyTotal() / 2) - (Broodwar->self()->supplyUsed() / 2) <= 3){
-		if (InformationManager::ourRace == Races::Enum::Protoss || InformationManager::ourRace == Races::Enum::Terran){
-			UnitType supplyProviderType = InformationManager::ourRace.getSupplyProvider();
-			Unit supplyBuilder = wrkUnits.at(1).unit;
-			bool foundUnit = false;
-			//for (auto w : wrkUnits){
-			//	if (w.status == "Idle"){
-			//		supplyBuilder = w.unit;
-			//		foundUnit = true;
-			//		break;
-			//	}
-			//}
-			if (foundUnit){
-				TilePosition targetBuildLocation = Broodwar->getBuildLocation(supplyProviderType, supplyBuilder->getTilePosition());
-				if (targetBuildLocation){
-					// Register an event that draws the target build location
-					Broodwar->registerEvent([targetBuildLocation, supplyProviderType](Game*)
-					{
-						Broodwar->drawBoxMap(Position(targetBuildLocation),
-						Position(targetBuildLocation + supplyProviderType.tileSize()),
-						Colors::Blue);
-					},
-						nullptr,  // condition
-						supplyProviderType.buildTime() + 100);  // frames to run
-
-					// Order the builder to construct the supply structure
-					supplyBuilder->build(supplyProviderType, targetBuildLocation);
-				}
-			}
-		}
-		else{
-			UnitType supplyProviderType = InformationManager::ourRace.getSupplyProvider();
-			Unit supplyBuilder = InformationManager::firstCenter->getClosestUnit(GetType == supplyProviderType.whatBuilds().first &&
-				(IsIdle || IsGatheringMinerals) &&
-				IsOwned);
-			if (supplyBuilder){
-				// Train the supply provider (Overlord) if the provider is not a structure
-				supplyBuilder->train(supplyProviderType);
-			}
-		}
-	}
-}
-
 void ResourceManager::buildPylonsNProbes(){
 	for (auto &u : Broodwar->self()->getUnits())
 	{
 		if (u->getType().isResourceDepot()) // A resource depot is a Command Center, Nexus, or Hatchery
 		{
-			if (wrkUnits.size() > 25){
+			if (wrkUnits.size() > 18){
 				
 			}
 			// Order the depot to construct more workers! But only when it is idle.
@@ -224,15 +172,12 @@ void ResourceManager::drawMinCircles(){
 	}
 }
 
-void ResourceManager::queueManager2(){
+void ResourceManager::queueManager(){
 	for (unsigned int i = 0; i < wrkUnits.size(); i++){
 		std::string sts = wrkUnits.at(i).status;
 		
 		if (wrkUnits.at(i).unit->isConstructing()){
 			continue;
-		}
-		if (sts == "Building" && !wrkUnits.at(i).unit->isConstructing()){
-			wrkUnits.at(i).status = "Idle";
 		}
 		if (sts == "Idle"){
 			if (wrkUnits.at(i).unit->isCarryingMinerals()){
@@ -286,55 +231,6 @@ void ResourceManager::queueManager2(){
 	}
 }
 
-//Queue maintanance
-void ResourceManager::queueManager(){
-	for (auto &u : Broodwar->self()->getUnits())
-	{
-		if (u->getType().isWorker()){
-			if (u->isCarryingMinerals() && !u->isGatheringMinerals()){
-				u->returnCargo();
-			}
-			else if (!u->isCarryingMinerals() && !u->isGatheringMinerals()){
-				bool notfound = true;
-				for (auto m : minPatches){
-					for (auto w : m.workers){
-						if (w == u){
-							notfound = false;
-							break;
-						}
-					}
-					if (!notfound){
-						break;
-					}
-				}
-				if (notfound){
-					mineralPatch* temp = roundTrip_min(u, &minPatches);
-					temp->workers.push_back(u);
-				}
-				
-			}
-			else if (u->isGatheringMinerals()){
-				Unit min = u->getLastCommand().getTarget();
-				for (auto m : minPatches){
-					if (m.unit == min){
-						m.workers.pop_front();
-						break;
-					}
-				}
-			}
-		}
-	}
-}
-
-//Queue gather function
-
-void ResourceManager::queueGather(){
-	for (unsigned int i = 0; i < minPatches.size(); i++){
-		if (minPatches.at(i).workers.front()->isGatheringMinerals()){
-
-		}
-	}
-}
 
 
 // Waiting time and Roundtrip calcutaions

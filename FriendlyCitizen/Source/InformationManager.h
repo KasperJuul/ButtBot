@@ -1,5 +1,6 @@
 #pragma once
 #include <BWAPI.h>
+#include <BWTA.h>
 #include <vector>
 #include "Debug.h"
 #include "UnitState.h"
@@ -59,4 +60,5 @@ public:
 	//Depcrecated - To be refactored.
 	static Unit firstCenter; //Swap out with better, generalized functionality later
 	static std::vector<Unit> firstWorkers; //Swap out with better, generalized functionality later
+	static std::vector<BWTA::BaseLocation*> baseLocations;
 };

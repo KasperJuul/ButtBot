@@ -15,6 +15,7 @@ public:
 			BWAPI::Unit unit;
 			std::string name;
 			std::deque<BWAPI::Unit> workers;
+			int center;
 		};	
 	
 	struct workerUnit{
@@ -47,7 +48,8 @@ public:
 	
 
 	static std::vector<ResourceManager::mineralPatch> minPatches;
-	static std::vector<ResourceManager::workerUnit> ResourceManager::wrkUnits;
+	static std::vector<ResourceManager::workerUnit> wrkUnits;
+	static std::vector<BWAPI::Unit> centers;
 	static BWTA::BaseLocation* mainBase;
 	static std::string log;
 };
