@@ -8,12 +8,17 @@ using namespace BWAPI;
 Race InformationManager::ourRace;
 Unit InformationManager::firstCenter; //Swap out with better, generalized functionality later
 std::vector<Unit> InformationManager::firstWorkers; //Swap out with better, generalized functionality later
+BWTA::BaseLocation* InformationManager::mainBase;
+std::vector<workerUnit> InformationManager::wrkUnits;
+std::vector<Center> InformationManager::centers;
+
 bool InformationManager::enemyFound;
 bool InformationManager::enemyBaseFound;
 bool InformationManager::initialScoutDestroyed;
 std::vector<TechNode> InformationManager::ourTech;
 Race InformationManager::theirRace;
 std::vector<TechNode> InformationManager::theirTech;
+std::vector<BWTA::BaseLocation*> InformationManager::baseLocations;
 std::set<UnitStatus> InformationManager::ourUnits; //Catalogues the units we have
 std::set<UnitType> InformationManager::ourUnitTypes; //Catalogues the unittypes we have
 
@@ -93,6 +98,10 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	for (auto &u : Broodwar->self()->getUnits()){//Early functionality to quickly get vital data for other sections of the code
 		if (InformationManager::ourRace.getCenter() == u->getType()){
 			InformationManager::firstCenter = u;
+			Center temp;
+			temp.unit = u;
+			temp.wrkUnits.clear();
+			centers.push_back(temp);
 		}
 		else if (InformationManager::ourRace.getWorker() == u->getType()){
 			InformationManager::firstWorkers.push_back(u);
@@ -138,6 +147,13 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 		temp.state = UnitState::FREE;
 		InformationManager::ourUnits.insert(temp);
 		InformationManager::ourUnitTypes.insert(u->getType());
+	}
+
+	//Getting the baselocations
+	mainBase = BWTA::getStartLocation(Broodwar->self());
+	for (auto &b : BWTA::getBaseLocations()){
+		if (b == mainBase){ continue;}
+		baseLocations.push_back(b);
 	}
 }
 
