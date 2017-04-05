@@ -70,7 +70,7 @@ void FriendlyCitizen::onFrame()
 	if (Broodwar->getFrameCount() % 40 == 0){
 		minelog += std::to_string(Broodwar->getFrameCount()) +
 		", " + std::to_string(Broodwar->self()->gatheredMinerals()) +
-		", " + std::to_string(ResourceManager::wrkUnits.size()) + "\n";
+		", " + std::to_string(InformationManager::wrkUnits.size()) + "\n";
 	}
 
 	/*for (unsigned int i = 0; i < ResourceManager::minPatches.size(); i++){
@@ -86,16 +86,21 @@ void FriendlyCitizen::onFrame()
 		if (u->getType().isWorker()){
 			Broodwar->drawTextMap(u->getPosition(),"%d", u->getID());
 		}
+		if (u->getType().isResourceDepot()){
+			Broodwar->drawTextMap(u->getPosition(), "%d", u->getID());
+		}
 	}
 
 	//std::string w = "Workers:";
-	std::string w = "Workers: " + std::to_string(ResourceManager::wrkUnits.size());
-	for (unsigned int i = 0; i < ResourceManager::wrkUnits.size(); i++){
+	std::string derp = "Base 1:  " + std::to_string(InformationManager::centers.at(0).unit->getID());
+	std::string w = "Workers: " + std::to_string(InformationManager::centers.at(0).wrkUnits.size());
+	for (unsigned int i = 0; i < InformationManager::wrkUnits.size(); i++){
 		//w += " [" + std::to_string(ResourceManager::wrkUnits.at(i).unit->getID()) + "]";
-		Position po = Position(ResourceManager::wrkUnits.at(i).unit->getPosition().x - 10, ResourceManager::wrkUnits.at(i).unit->getPosition().y - 10);
-		Broodwar->drawTextMap(po, ResourceManager::wrkUnits.at(i).status.c_str());
+		Position po = Position(InformationManager::wrkUnits.at(i).unit->getPosition().x - 10, InformationManager::wrkUnits.at(i).unit->getPosition().y - 10);
+		Broodwar->drawTextMap(po, InformationManager::wrkUnits.at(i).status.c_str());
 	}
-	Broodwar->drawTextScreen(20, 30, w.c_str());
+	Broodwar->drawTextScreen(20, 30, derp.c_str());
+	Broodwar->drawTextScreen(20, 40, w.c_str());
 
 	//Broodwar->drawTextScreen(20, 40, "M1: %d %d", ResourceManager::minPatches.at(0).workers[0]->getID(), ResourceManager::minPatches.at(0).workers[1]->getID());
 	//Broodwar->drawTextScreen(20, 50, "M2: %d", ResourceManager::minPatches.at(1).workers[0]->getID());
@@ -104,7 +109,7 @@ void FriendlyCitizen::onFrame()
 		Broodwar->drawTextScreen(20, 20, "Supply total: %d", BWAPI::Broodwar->self()->supplyTotal() / 2);
 		//ResourceManager::drawMinCircles();
 	}
-
+	
 	// Return if the game is a replay or is paused
 	if (Broodwar->isReplay() || Broodwar->isPaused() || !Broodwar->self())
 		return;
@@ -152,8 +157,6 @@ void FriendlyCitizen::onSendText(std::string text)
 		// Send the text to the game if it is not being processed.
 		Broodwar->sendText("%s", text.c_str());
 	}
-	// Send the text to the game if it is not being processed.
-	Broodwar->sendText("%s", text.c_str());
 
 
 	// Make sure to use %s and pass the text as a parameter,
@@ -253,16 +256,26 @@ void FriendlyCitizen::onSaveGame(std::string gameName)
 
 void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 {
-	if (unit->getType().isWorker()){
-		ResourceManager::workerUnit temp;
-		temp.unit = unit;
-		temp.status = "Idle";
-		ResourceManager::wrkUnits.push_back(temp);
-	}
 	if (unit->getType().isResourceDepot()){
-		ResourceManager::centers.push_back(unit);
+		Center temp;
+		temp.unit = unit;
+		temp.wrkUnits.clear();
 		BuildingPlacer::xpandIsBeingBuild = false;
 	}
+	if (unit->getType().isWorker()){
+		workerUnit temp;
+		temp.unit = unit;
+		temp.status = "Idle";
+		Unit center = unit->getClosestUnit(IsResourceDepot);
+		Broodwar << "center = " << std::to_string(center->getID()) << std::endl;
+		for (auto &c : InformationManager::centers){
+			if (c.unit == center){
+				c.wrkUnits.push_back(temp);
+			}
+		}
+		//InformationManager::wrkUnits.push_back(temp);
+	}
+
 	if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
 		BuildingPlacer::supplyProviderIsBeingBuild = false;
 	}

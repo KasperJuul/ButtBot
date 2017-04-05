@@ -3,35 +3,50 @@
 #include "Debug.h"
 #include "ResourceManager.h"
 
-using namespace BWAPI;
+
 using namespace BWTA;
 
 bool BuildingPlacer::supplyProviderIsBeingBuild = false; 
-
 bool BuildingPlacer::xpandIsBeingBuild = false;
 
 
 void BuildingPlacer::onStart(){
-
+	
 }
 
 void BuildingPlacer::onFrame(){
 	static int lastChecked = 0;
+	bool wait = false;
 
-	if (InformationManager::firstCenter->isIdle() && ResourceManager::wrkUnits.size() < 15 &&
-		!InformationManager::firstCenter->train(InformationManager::firstCenter->getType().getRace().getWorker())){
-		// If that fails, draw the error at the location so that you can visibly see what went wrong!
-		// However, drawing the error once will only appear for a single frame
-		// so create an event that keeps it on the screen for some frames
-		Position pos = InformationManager::firstCenter->getPosition();
-		Error lastErr = Broodwar->getLastError();
-		Broodwar->registerEvent([pos, lastErr](Game*){ Broodwar->drawTextMap(pos, "%c%s", Text::White, lastErr.c_str()); },   // action
-			nullptr,    // condition
-			Broodwar->getLatencyFrames());  // frames to run
+	for (auto &c : InformationManager::centers){
+		if (c.unit->isIdle() && c.wrkUnits.size() < 12 &&
+			!c.unit->train(c.unit->getType().getRace().getWorker()) &&
+			!wait){
+			// If that fails, draw the error at the location so that you can visibly see what went wrong!
+			// However, drawing the error once will only appear for a single frame
+			// so create an event that keeps it on the screen for some frames
+			Position pos = c.unit->getPosition();
+			Error lastErr = Broodwar->getLastError();
+			Broodwar->registerEvent([pos, lastErr](Game*){ Broodwar->drawTextMap(pos, "%c%s", Text::White, lastErr.c_str()); },   // action
+				nullptr,    // condition
+				Broodwar->getLatencyFrames());  // frames to run
+		}
 	}
+	//if (InformationManager::firstCenter->isIdle() && InformationManager::wrkUnits.size() < 15 &&
+	//	!InformationManager::firstCenter->train(InformationManager::firstCenter->getType().getRace().getWorker()) &&
+	//	!wait){
+	//	// If that fails, draw the error at the location so that you can visibly see what went wrong!
+	//	// However, drawing the error once will only appear for a single frame
+	//	// so create an event that keeps it on the screen for some frames
+	//	Position pos = InformationManager::firstCenter->getPosition();
+	//	Error lastErr = Broodwar->getLastError();
+	//	Broodwar->registerEvent([pos, lastErr](Game*){ Broodwar->drawTextMap(pos, "%c%s", Text::White, lastErr.c_str()); },   // action
+	//		nullptr,    // condition
+	//		Broodwar->getLatencyFrames());  // frames to run
+	//}
 
 	if (Broodwar->self()->minerals() >= 500 && !xpandIsBeingBuild){
-		for (ResourceManager::workerUnit &myUnit : ResourceManager::wrkUnits) {
+		for (workerUnit &myUnit : InformationManager::centers.at(0).wrkUnits) {
 			if (myUnit.status == "Idle" || myUnit.status == "Returning Cargo") {
 				//get a nice place to build a supply depot
 				UnitType townHall = Broodwar->self()->getRace().getCenter();
@@ -66,7 +81,7 @@ void BuildingPlacer::onFrame(){
 	if (Broodwar->self()->supplyTotal() - Broodwar->self()->supplyUsed() < 6 && Broodwar->self()->minerals() >= 100 &&
 		Broodwar->self()->incompleteUnitCount(Broodwar->self()->getRace().getSupplyProvider()) == 0) {
 		//iterate over units to find a worker
-		for (ResourceManager::workerUnit &myUnit : ResourceManager::wrkUnits) {
+		for (workerUnit &myUnit : InformationManager::wrkUnits) {
 			if (myUnit.status == "Idle" || myUnit.status == "Returning Cargo") {
 				//get a nice place to build a supply depot
 				UnitType supplyDepot = Broodwar->self()->getRace().getSupplyProvider();
@@ -157,8 +172,8 @@ TilePosition BuildingPlacer::naturalExpantion(){
 	int eras = 0;
 	TilePosition buildTile = TilePositions::None;
 	for (auto &b : InformationManager::baseLocations){
-		if (b != ResourceManager::mainBase && b->getGroundDistance(ResourceManager::mainBase) < groundDist){
-			groundDist = b->getGroundDistance(ResourceManager::mainBase);
+		if (b != InformationManager::mainBase && b->getGroundDistance(InformationManager::mainBase) < groundDist){
+			groundDist = b->getGroundDistance(InformationManager::mainBase);
 			buildTile = b->getTilePosition();
 			eras = i;
 		}

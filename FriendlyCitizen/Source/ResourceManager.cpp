@@ -9,16 +9,12 @@
 using namespace BWAPI;
 using namespace Filter;
 
-BWTA::BaseLocation* ResourceManager::mainBase;
 
 std::string ResourceManager::log = "";
 static int miningTimeConstant = 80;
 std::vector<ResourceManager::mineralPatch> ResourceManager::minPatches;
-std::vector<ResourceManager::workerUnit> ResourceManager::wrkUnits;
-std::vector<BWAPI::Unit> ResourceManager::centers;
 
 void ResourceManager::onStart(){
-	mainBase = BWTA::getStartLocation(Broodwar->self());
 	findMinPatches();
 	
 }
@@ -33,7 +29,7 @@ void ResourceManager::onFrame(){
 void ResourceManager::findMinPatches(){
 	int itr = 0;
 	for (auto m : Broodwar->getMinerals()){
-		if (mainBase->getRegion()->getPolygon().isInside(m->getPosition())){
+		if (InformationManager::mainBase->getRegion()->getPolygon().isInside(m->getPosition())){
 			mineralPatch temp;
 			temp.unit = m;
 			temp.name = "M" + std::to_string(itr);
@@ -47,44 +43,40 @@ void ResourceManager::findMinPatches(){
 
 void ResourceManager::stdGather(){
 	// Iterate through all the units that we own
-	for (auto &u : Broodwar->self()->getUnits())
-	{
-		// Ignore the unit if it no longer exists
-		// Make sure to include this block when handling any Unit pointer!
-		if (!u->exists())
-			continue;
+	for (auto &c : InformationManager::centers){
+		for (auto &u : c.wrkUnits){
+			// Ignore the unit if it no longer exists
+			// Make sure to include this block when handling any Unit pointer!
+			if (!u.unit->exists())
+				continue;
 
-		// Ignore the unit if it has one of the following status ailments
-		if (u->isLockedDown() || u->isMaelstrommed() || u->isStasised())
-			continue;
+			// Ignore the unit if it has one of the following status ailments
+			if (u.unit->isLockedDown() || u.unit->isMaelstrommed() || u.unit->isStasised())
+				continue;
 
-		// Ignore the unit if it is in one of the following states
-		if (u->isLoaded() || !u->isPowered() || u->isStuck())
-			continue;
+			// Ignore the unit if it is in one of the following states
+			if (u.unit->isLoaded() || !u.unit->isPowered() || u.unit->isStuck())
+				continue;
 
-		// Ignore the unit if it is incomplete or busy constructing
-		if (!u->isCompleted() || u->isConstructing())
-			continue;
-
-
-		// Finally make the unit do some stuff!
+			// Ignore the unit if it is incomplete or busy constructing
+			if (!u.unit->isCompleted() || u.unit->isConstructing())
+				continue;
 
 
-		// If the unit is a worker unit
-		if (u->getType().isWorker())
-		{
+			// Finally make the unit do some stuff!
+
 			// if our worker is idle
-			if (u->isIdle())
+			if (u.unit->isIdle())
 			{
 				// Order workers carrying a resource to return them to the center,
 				// otherwise find a mineral patch to harvest.
-				if (u->isCarryingGas() || u->isCarryingMinerals())
+				if (u.unit->isCarryingGas() || u.unit->isCarryingMinerals())
 				{
 					//u->returnCargo();
 				}
-				else if (!u->getPowerUp())  // The worker cannot harvest anything if it is carrying a powerup such as a flag
+				else if (!u.unit->getPowerUp())  // The worker cannot harvest anything if it is carrying a powerup such as a flag
 				{       					// Harvest from the nearest mineral patch or gas refinery
-					if (!u->gather(u->getClosestUnit(IsMineralField || IsRefinery)))
+					if (!u.unit->gather(u.unit->getClosestUnit(IsMineralField || IsRefinery)))
 					{
 						// If the call fails, then print the last error message
 						Broodwar << Broodwar->getLastError() << std::endl;
@@ -92,8 +84,57 @@ void ResourceManager::stdGather(){
 
 				} // closure: has no powerup
 			} // closure: if idle
+
 		}
-	} // closure: unit iterator
+	}
+
+	//for (auto &u : Broodwar->self()->getUnits())
+	//{
+	//	// Ignore the unit if it no longer exists
+	//	// Make sure to include this block when handling any Unit pointer!
+	//	if (!u->exists())
+	//		continue;
+
+	//	// Ignore the unit if it has one of the following status ailments
+	//	if (u->isLockedDown() || u->isMaelstrommed() || u->isStasised())
+	//		continue;
+
+	//	// Ignore the unit if it is in one of the following states
+	//	if (u->isLoaded() || !u->isPowered() || u->isStuck())
+	//		continue;
+
+	//	// Ignore the unit if it is incomplete or busy constructing
+	//	if (!u->isCompleted() || u->isConstructing())
+	//		continue;
+
+
+	//	// Finally make the unit do some stuff!
+
+
+	//	// If the unit is a worker unit
+	//	if (u->getType().isWorker())
+	//	{
+	//		// if our worker is idle
+	//		if (u->isIdle())
+	//		{
+	//			// Order workers carrying a resource to return them to the center,
+	//			// otherwise find a mineral patch to harvest.
+	//			if (u->isCarryingGas() || u->isCarryingMinerals())
+	//			{
+	//				//u->returnCargo();
+	//			}
+	//			else if (!u->getPowerUp())  // The worker cannot harvest anything if it is carrying a powerup such as a flag
+	//			{       					// Harvest from the nearest mineral patch or gas refinery
+	//				if (!u->gather(u->getClosestUnit(IsMineralField || IsRefinery)))
+	//				{
+	//					// If the call fails, then print the last error message
+	//					Broodwar << Broodwar->getLastError() << std::endl;
+	//				}
+
+	//			} // closure: has no powerup
+	//		} // closure: if idle
+	//	}
+	//} // closure: unit iterator
 }
 
 void ResourceManager::buildPylonsNProbes(){
@@ -101,7 +142,7 @@ void ResourceManager::buildPylonsNProbes(){
 	{
 		if (u->getType().isResourceDepot()) // A resource depot is a Command Center, Nexus, or Hatchery
 		{
-			if (wrkUnits.size() > 18){
+			if (InformationManager::wrkUnits.size() > 18){
 				
 			}
 			// Order the depot to construct more workers! But only when it is idle.
@@ -173,58 +214,58 @@ void ResourceManager::drawMinCircles(){
 }
 
 void ResourceManager::queueManager(){
-	for (unsigned int i = 0; i < wrkUnits.size(); i++){
-		std::string sts = wrkUnits.at(i).status;
+	for (unsigned int i = 0; i < InformationManager::wrkUnits.size(); i++){
+		std::string sts = InformationManager::wrkUnits.at(i).status;
 		
-		if (wrkUnits.at(i).unit->isConstructing()){
+		if (InformationManager::wrkUnits.at(i).unit->isConstructing()){
 			continue;
 		}
 		if (sts == "Idle"){
-			if (wrkUnits.at(i).unit->isCarryingMinerals()){
-				wrkUnits.at(i).status = "In Queue";
+			if (InformationManager::wrkUnits.at(i).unit->isCarryingMinerals()){
+				InformationManager::wrkUnits.at(i).status = "In Queue";
 				continue;
 			}
 			log += "Calculating round trip for Worker[" + std::to_string(i) + "] : \n";
-			mineralPatch* temp = roundTrip_min(wrkUnits.at(i).unit, &minPatches);
-			temp->workers.push_back(wrkUnits.at(i).unit);
-			wrkUnits.at(i).status = "In Queue";
-			wrkUnits.at(i).mineral = temp;
+			mineralPatch* temp = roundTrip_min(InformationManager::wrkUnits.at(i).unit, &minPatches);
+			temp->workers.push_back(InformationManager::wrkUnits.at(i).unit);
+			InformationManager::wrkUnits.at(i).status = "In Queue";
+			InformationManager::wrkUnits.at(i).mineral = temp;
 			log += "Worker[" + std::to_string(i) + "] queued at " + temp->name + "\n";
 		}
 		if (sts == "In Queue"){
-			if (wrkUnits.at(i).mineral->workers.front() == wrkUnits.at(i).unit){
-				wrkUnits.at(i).unit->gather(wrkUnits.at(i).mineral->unit);
-				wrkUnits.at(i).status = "Mining";
+			if (InformationManager::wrkUnits.at(i).mineral->workers.front() == InformationManager::wrkUnits.at(i).unit){
+				InformationManager::wrkUnits.at(i).unit->gather(InformationManager::wrkUnits.at(i).mineral->unit);
+				InformationManager::wrkUnits.at(i).status = "Mining";
 			}
 			else{
-				wrkUnits.at(i).unit->follow(wrkUnits.at(i).mineral->workers.front());
-				wrkUnits.at(i).status = "Waiting";
+				InformationManager::wrkUnits.at(i).unit->follow(InformationManager::wrkUnits.at(i).mineral->workers.front());
+				InformationManager::wrkUnits.at(i).status = "Waiting";
 			}
 			
 		}
 		else if (sts == "Waiting"){
-			if (wrkUnits.at(i).mineral->workers.front() == wrkUnits.at(i).unit){
-				wrkUnits.at(i).unit->gather(wrkUnits.at(i).mineral->unit);
-				wrkUnits.at(i).status = "Mining";
+			if (InformationManager::wrkUnits.at(i).mineral->workers.front() == InformationManager::wrkUnits.at(i).unit){
+				InformationManager::wrkUnits.at(i).unit->gather(InformationManager::wrkUnits.at(i).mineral->unit);
+				InformationManager::wrkUnits.at(i).status = "Mining";
 			}
 			else {
-				wrkUnits.at(i).unit->move(wrkUnits.at(i).mineral->workers.front()->getPosition());
+				InformationManager::wrkUnits.at(i).unit->move(InformationManager::wrkUnits.at(i).mineral->workers.front()->getPosition());
 			}
 		}
 		else if (sts == "Mining"){
-			if (wrkUnits.at(i).unit->isCarryingMinerals()){
-				wrkUnits.at(i).mineral->workers.pop_front();
-				wrkUnits.at(i).unit->returnCargo();
-				wrkUnits.at(i).status = "Returning Cargo";
+			if (InformationManager::wrkUnits.at(i).unit->isCarryingMinerals()){
+				InformationManager::wrkUnits.at(i).mineral->workers.pop_front();
+				InformationManager::wrkUnits.at(i).unit->returnCargo();
+				InformationManager::wrkUnits.at(i).status = "Returning Cargo";
 			}
 		}
 		else if (sts == "Returning Cargo"){
-			if (!wrkUnits.at(i).unit->isCarryingMinerals()){
-				wrkUnits.at(i).unit->stop();
-				wrkUnits.at(i).status = "Idle";
+			if (!InformationManager::wrkUnits.at(i).unit->isCarryingMinerals()){
+				InformationManager::wrkUnits.at(i).unit->stop();
+				InformationManager::wrkUnits.at(i).status = "Idle";
 			}
-			if (wrkUnits.at(i).unit->isIdle()){
-				wrkUnits.at(i).unit->returnCargo();
+			if (InformationManager::wrkUnits.at(i).unit->isIdle()){
+				InformationManager::wrkUnits.at(i).unit->returnCargo();
 			}
 		}
 		
