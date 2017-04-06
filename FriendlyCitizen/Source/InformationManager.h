@@ -1,9 +1,11 @@
 #pragma once
 #include <BWAPI.h>
+#include <BWTA.h>
 #include <vector>
 #include "Debug.h"
 #include "UnitState.h"
 #include "OwnerProcess.h"
+#include "ResourceManager.h"
 #include <set>
 
 using namespace BWAPI;
@@ -20,6 +22,17 @@ struct UnitStatus{
 	UnitState state = UnitState::FREE;
 	OwnerProcess owner = OwnerProcess::FREE;
 	Unit self;
+};
+
+struct workerUnit{
+	BWAPI::Unit unit;
+	ResourceManager::mineralPatch* mineral;
+	std::string status;		// Idle, Mining, Returning Cargo, Waiting,
+};
+
+struct Center{
+	BWAPI::Unit unit;
+	std::vector<workerUnit> wrkUnits;
 };
 
 inline bool operator<(const UnitStatus& lhs, const UnitStatus& rhs)
@@ -59,4 +72,8 @@ public:
 	//Depcrecated - To be refactored.
 	static Unit firstCenter; //Swap out with better, generalized functionality later
 	static std::vector<Unit> firstWorkers; //Swap out with better, generalized functionality later
+	static std::vector<BWTA::BaseLocation*> baseLocations;
+	static BWTA::BaseLocation* mainBase;
+	static std::vector<workerUnit> wrkUnits;
+	static std::vector<Center> centers;
 };
