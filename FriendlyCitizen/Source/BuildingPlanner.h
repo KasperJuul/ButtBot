@@ -5,8 +5,10 @@
 #include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "InformationManager.h"
 
 class BuildingPlanner{
 	static void makePlan();
 	static void plannerOnFrame();
+	static int heuristic(TechNode node);
 };
