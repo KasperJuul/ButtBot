@@ -8,6 +8,7 @@
 #include "InformationManager.h"
 
 class BuildingPlanner{
+public:
 	static void makePlan();
 	static void plannerOnFrame();
 	static int heuristic(TechNode node);
