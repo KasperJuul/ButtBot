@@ -6,6 +6,7 @@
 #include "ResourceManager.h"
 #include "IntelManager.h"
 #include "BuildingPlacer.h"
+#include "BuildingPlanner.h"
 
 using namespace BWAPI;
 using namespace Filter;
@@ -133,6 +134,7 @@ void FriendlyCitizen::onFrame()
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
 	//IntelManager::ScoutOnFrame();
+	BuildingPlanner::plannerOnFrame();
 }
 
 void FriendlyCitizen::onSendText(std::string text)
@@ -197,6 +199,7 @@ void FriendlyCitizen::onNukeDetect(BWAPI::Position target)//Infomanager low prio
 
 void FriendlyCitizen::onUnitDiscover(BWAPI::Unit unit)
 {
+	InformationManager::OnNewUnit(unit);
 }
 
 void FriendlyCitizen::onUnitEvade(BWAPI::Unit unit)
@@ -213,6 +216,7 @@ void FriendlyCitizen::onUnitHide(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 {
+	InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
 	{
 		// if we are in a replay, then we will print out the build order of the structures
@@ -228,6 +232,7 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 {
+	InformationManager::OnUnitDestroy(unit);
 }
 
 void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
@@ -256,6 +261,7 @@ void FriendlyCitizen::onSaveGame(std::string gameName)
 
 void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 {
+	InformationManager::OnNewUnit(unit);
 	if (unit->getType().isResourceDepot()){
 		Center temp;
 		temp.unit = unit;

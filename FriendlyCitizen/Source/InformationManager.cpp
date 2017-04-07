@@ -68,6 +68,9 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 		else if (t == InformationManager::ourRace.getWorker()){
 			tempNode.exists = true;
 		}
+		else {
+			tempNode.exists = false;
+		}
 		tempNodes.push_back(tempNode);
 	}
 
@@ -135,8 +138,11 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 			temp += tempNodes.at(i).precondition.at(i2).selfType.c_str();
 			temp += "\n";
 		}
+		temp += "\nThis unit exists: " + std::to_string(tempNodes.at(i).exists);
 		Debug::writeLog(temp.c_str(), tempNodes.at(i).selfType.getName().c_str(), InformationManager::ourRace.getName().c_str());
 	}
+
+	InformationManager::ourTech = tempNodes;
 
 
 	//Adding units to our manual structs.
@@ -163,8 +169,19 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 		temp.owner = OwnerProcess::FREE;
 		temp.self = unit;
 		temp.state = UnitState::FREE;
-		InformationManager::ourUnits.insert(temp);
-		InformationManager::ourUnitTypes.insert(unit->getType());
+		bool found = false;
+		for (auto us : InformationManager::ourUnits){
+			if (us.self == unit) found = true;
+		}
+		if (!found){
+			InformationManager::ourUnits.insert(temp);
+			InformationManager::ourUnitTypes.insert(unit->getType());
+			for (auto ot : InformationManager::ourTech){
+				if (ot.selfType == unit->getType()){
+					ot.exists = true;
+				}
+			}
+		}
 	}
 	else if(unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
 		//Unimplemented
@@ -191,6 +208,11 @@ void InformationManager::OnUnitDestroy(Unit unit){
 		}
 		if (!hasStillType){
 			InformationManager::ourUnitTypes.erase(unit->getType());
+			for (auto ot : InformationManager::ourTech){
+				if (ot.selfType == unit->getType()){
+					ot.exists = false;
+				}
+			}
 		}
 	}
 	else if (unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
