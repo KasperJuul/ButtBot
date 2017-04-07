@@ -48,6 +48,7 @@ void FriendlyCitizen::onStart()
 		analysis_just_finished = false;
 	}
 	Broodwar->setLocalSpeed(41);
+	Broodwar->sendText("black sheep wall");
 }
 
 void FriendlyCitizen::onEnd(bool isWinner)
@@ -84,11 +85,21 @@ void FriendlyCitizen::onFrame()
 	
 	for (auto &u : Broodwar->self()->getUnits()){
 		if (u->getType().isWorker()){
-			Broodwar->drawTextMap(u->getPosition(),"%d", u->getID());
+			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::Blue, u->getID());
 		}
+		else if (u->getType().isResourceDepot()){
+			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::Orange, u->getID());
+		}
+		else{
+			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::BrightRed, u->getID());
+		}
+
+	}
+	for (auto &u : Broodwar->enemy()->getUnits()){
 		if (u->getType().isResourceDepot()){
-			Broodwar->drawTextMap(u->getPosition(), "%d", u->getID());
+			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::Orange, u->getID());
 		}
+
 	}
 
 	//std::string w = "Workers:";
@@ -256,28 +267,31 @@ void FriendlyCitizen::onSaveGame(std::string gameName)
 
 void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 {
-	if (unit->getType().isResourceDepot()){
-		Center temp;
-		temp.unit = unit;
-		temp.wrkUnits.clear();
-		BuildingPlacer::xpandIsBeingBuild = false;
-	}
-	if (unit->getType().isWorker()){
-		workerUnit temp;
-		temp.unit = unit;
-		temp.status = "Idle";
-		Unit center = unit->getClosestUnit(IsResourceDepot);
-		Broodwar << "center = " << std::to_string(center->getID()) << std::endl;
-		for (auto &c : InformationManager::centers){
-			if (c.unit == center){
-				c.wrkUnits.push_back(temp);
-			}
+	if (unit->getPlayer() == Broodwar->self()){
+		if (unit->getType().isResourceDepot()){
+			Center temp;
+			temp.unit = unit;
+			temp.wrkUnits.clear();
+			InformationManager::centers.push_back(temp);
+			BuildingPlacer::xpandIsBeingBuild = false;
 		}
-		//InformationManager::wrkUnits.push_back(temp);
-	}
+		if (unit->getType().isWorker()){
+			workerUnit temp;
+			temp.unit = unit;
+			temp.status = "Idle";
+			Unit center = unit->getClosestUnit(IsResourceDepot);
+			Broodwar << "center = " << std::to_string(center->getID()) << std::endl;
+			for (auto &c : InformationManager::centers){
+				if (c.unit == center){
+					c.wrkUnits.push_back(temp);
+				}
+			}
+			//InformationManager::wrkUnits.push_back(temp);
+		}
 
-	if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
-		BuildingPlacer::supplyProviderIsBeingBuild = false;
+		if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
+			BuildingPlacer::supplyProviderIsBeingBuild = false;
+		}
 	}
 
 }

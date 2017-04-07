@@ -19,7 +19,7 @@ void BuildingPlacer::onFrame(){
 	bool wait = false;
 
 	for (auto &c : InformationManager::centers){
-		if (c.unit->isIdle() && c.wrkUnits.size() < 12 &&
+		if (c.unit->isCompleted() && c.unit->isIdle() && c.wrkUnits.size() < 12 &&
 			!c.unit->train(c.unit->getType().getRace().getWorker()) &&
 			!wait){
 			// If that fails, draw the error at the location so that you can visibly see what went wrong!
@@ -27,23 +27,11 @@ void BuildingPlacer::onFrame(){
 			// so create an event that keeps it on the screen for some frames
 			Position pos = c.unit->getPosition();
 			Error lastErr = Broodwar->getLastError();
-			Broodwar->registerEvent([pos, lastErr](Game*){ Broodwar->drawTextMap(pos, "%c%s", Text::White, lastErr.c_str()); },   // action
+			Broodwar->registerEvent([pos, lastErr](Game*){ Broodwar->drawTextMap(Position(pos.x, pos.y+10), "%c%s", Text::White, lastErr.c_str()); },   // action
 				nullptr,    // condition
 				Broodwar->getLatencyFrames());  // frames to run
 		}
 	}
-	//if (InformationManager::firstCenter->isIdle() && InformationManager::wrkUnits.size() < 15 &&
-	//	!InformationManager::firstCenter->train(InformationManager::firstCenter->getType().getRace().getWorker()) &&
-	//	!wait){
-	//	// If that fails, draw the error at the location so that you can visibly see what went wrong!
-	//	// However, drawing the error once will only appear for a single frame
-	//	// so create an event that keeps it on the screen for some frames
-	//	Position pos = InformationManager::firstCenter->getPosition();
-	//	Error lastErr = Broodwar->getLastError();
-	//	Broodwar->registerEvent([pos, lastErr](Game*){ Broodwar->drawTextMap(pos, "%c%s", Text::White, lastErr.c_str()); },   // action
-	//		nullptr,    // condition
-	//		Broodwar->getLatencyFrames());  // frames to run
-	//}
 
 	if (Broodwar->self()->minerals() >= 500 && !xpandIsBeingBuild){
 		for (workerUnit &myUnit : InformationManager::centers.at(0).wrkUnits) {
@@ -80,32 +68,42 @@ void BuildingPlacer::onFrame(){
 	//if we're running out of supply and have enough minerals ...
 	if (Broodwar->self()->supplyTotal() - Broodwar->self()->supplyUsed() < 6 && Broodwar->self()->minerals() >= 100 &&
 		Broodwar->self()->incompleteUnitCount(Broodwar->self()->getRace().getSupplyProvider()) == 0) {
+		UnitType supplyDepot = Broodwar->self()->getRace().getSupplyProvider();
 		//iterate over units to find a worker
-		for (workerUnit &myUnit : InformationManager::wrkUnits) {
-			if (myUnit.status == "Idle" || myUnit.status == "Returning Cargo") {
-				//get a nice place to build a supply depot
-				UnitType supplyDepot = Broodwar->self()->getRace().getSupplyProvider();
-				TilePosition buildTile =
-					getBuildTile(myUnit.unit, supplyDepot, InformationManager::firstCenter->getTilePosition());
-				//and, if found, send the worker to build it (and leave others alone - break;)
-				if (buildTile != TilePositions::None) {
-					// Register an event that draws the target build location
-					Broodwar->registerEvent([buildTile, supplyDepot](Game*)
-					{
-						Broodwar->drawBoxMap(Position(buildTile),
-							Position(buildTile + supplyDepot.tileSize()),
-							Colors::Blue);
-					},
-						nullptr,  // condition
-						supplyDepot.buildTime() + 100);  // frames to run
+		if (supplyDepot.isBuilding()){
+			for (workerUnit &myUnit : InformationManager::wrkUnits) {
+				if (myUnit.status == "Idle" || myUnit.status == "Returning Cargo") {
+					//get a nice place to build a supply depot
+					TilePosition buildTile =
+						getBuildTile(myUnit.unit, supplyDepot, InformationManager::firstCenter->getTilePosition());
 
-					myUnit.unit->build(supplyDepot, buildTile);
-					myUnit.status = "Building";
-					Broodwar << "worker is building supplyprovider" << std::endl;
-					supplyProviderIsBeingBuild = true;
-					break;
+					//and, if found, send the worker to build it (and leave others alone - break;)
+					if (buildTile != TilePositions::None) {
+						// Register an event that draws the target build location
+						Broodwar->registerEvent([buildTile, supplyDepot](Game*)
+						{
+							Broodwar->drawBoxMap(Position(buildTile),
+								Position(buildTile + supplyDepot.tileSize()),
+								Colors::Blue);
+						},
+							nullptr,  // condition
+							supplyDepot.buildTime() + 100);  // frames to run
+
+						myUnit.unit->build(supplyDepot, buildTile);
+						myUnit.status = "Building";
+						Broodwar << "worker is building supplyprovider" << std::endl;
+						supplyProviderIsBeingBuild = true;
+						break;
+					}
 				}
 			}
+		}
+		else{
+			Unit supplyBuilder = Broodwar->getClosestUnit((Position) Broodwar->self()->getStartLocation(),Filter::GetType == supplyDepot.whatBuilds().first &&
+				(Filter::IsIdle || Filter::IsGatheringMinerals) &&
+				Filter::IsOwned);
+			// Train the supply provider (Overlord) if the provider is not a structure
+			supplyBuilder->train(supplyDepot);
 		}
 	}
 }
