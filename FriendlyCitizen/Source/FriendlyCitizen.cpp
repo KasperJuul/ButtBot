@@ -6,6 +6,7 @@
 #include "ResourceManager.h"
 #include "IntelManager.h"
 #include "BuildingPlacer.h"
+#include "BuildingPlanner.h"
 
 using namespace BWAPI;
 using namespace Filter;
@@ -48,7 +49,9 @@ void FriendlyCitizen::onStart()
 		analysis_just_finished = false;
 	}
 	Broodwar->setLocalSpeed(41);
+
 	Broodwar->sendText("black sheep wall");
+
 }
 
 void FriendlyCitizen::onEnd(bool isWinner)
@@ -99,7 +102,6 @@ void FriendlyCitizen::onFrame()
 		if (u->getType().isResourceDepot()){
 			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::Orange, u->getID());
 		}
-
 	}
 
 	//std::string w = "Workers:";
@@ -144,6 +146,7 @@ void FriendlyCitizen::onFrame()
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
 	//IntelManager::ScoutOnFrame();
+	BuildingPlanner::plannerOnFrame();
 }
 
 void FriendlyCitizen::onSendText(std::string text)
@@ -208,6 +211,7 @@ void FriendlyCitizen::onNukeDetect(BWAPI::Position target)//Infomanager low prio
 
 void FriendlyCitizen::onUnitDiscover(BWAPI::Unit unit)
 {
+	InformationManager::OnNewUnit(unit);
 }
 
 void FriendlyCitizen::onUnitEvade(BWAPI::Unit unit)
@@ -224,6 +228,7 @@ void FriendlyCitizen::onUnitHide(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 {
+	InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
 	{
 		// if we are in a replay, then we will print out the build order of the structures
@@ -239,6 +244,7 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 {
+	InformationManager::OnUnitDestroy(unit);
 }
 
 void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
@@ -267,31 +273,31 @@ void FriendlyCitizen::onSaveGame(std::string gameName)
 
 void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 {
-	if (unit->getPlayer() == Broodwar->self()){
-		if (unit->getType().isResourceDepot()){
-			Center temp;
-			temp.unit = unit;
-			temp.wrkUnits.clear();
-			InformationManager::centers.push_back(temp);
-			BuildingPlacer::xpandIsBeingBuild = false;
-		}
-		if (unit->getType().isWorker()){
-			workerUnit temp;
-			temp.unit = unit;
-			temp.status = "Idle";
-			Unit center = unit->getClosestUnit(IsResourceDepot);
-			Broodwar << "center = " << std::to_string(center->getID()) << std::endl;
-			for (auto &c : InformationManager::centers){
-				if (c.unit == center){
-					c.wrkUnits.push_back(temp);
-				}
-			}
-			//InformationManager::wrkUnits.push_back(temp);
-		}
 
-		if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
-			BuildingPlacer::supplyProviderIsBeingBuild = false;
+	InformationManager::OnNewUnit(unit);
+	if (unit->getType().isResourceDepot()){
+		Center temp;
+		temp.unit = unit;
+		temp.wrkUnits.clear();
+		BuildingPlacer::xpandIsBeingBuild = false;
+	}
+	if (unit->getType().isWorker()){
+		workerUnit temp;
+		temp.unit = unit;
+		temp.status = "Idle";
+		Unit center = unit->getClosestUnit(IsResourceDepot);
+		Broodwar << "center = " << std::to_string(center->getID()) << std::endl;
+		for (auto &c : InformationManager::centers){
+			if (c.unit == center){
+				c.wrkUnits.push_back(temp);
+			}
 		}
+		//InformationManager::wrkUnits.push_back(temp);
+	}
+
+	if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
+		BuildingPlacer::supplyProviderIsBeingBuild = false;
+
 	}
 
 }

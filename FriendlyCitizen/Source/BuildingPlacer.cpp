@@ -27,6 +27,7 @@ void BuildingPlacer::onFrame(){
 			// so create an event that keeps it on the screen for some frames
 			Position pos = c.unit->getPosition();
 			Error lastErr = Broodwar->getLastError();
+
 			Broodwar->registerEvent([pos, lastErr](Game*){ Broodwar->drawTextMap(Position(pos.x, pos.y+10), "%c%s", Text::White, lastErr.c_str()); },   // action
 				nullptr,    // condition
 				Broodwar->getLatencyFrames());  // frames to run
