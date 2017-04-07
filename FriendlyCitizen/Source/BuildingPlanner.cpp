@@ -13,55 +13,20 @@ void BuildingPlanner::plannerOnFrame(){
 	}
 }
 
-void BuildingPlanner::makePlan(){
-	std::vector<TechNode> currentNodes;
-	for (auto ut : InformationManager::ourUnitTypes){
-		for (auto ot : InformationManager::ourTech){
-			if (ot.selfType == ut){
-				bool valid = true;
-				for (auto precon : ot.precondition){
-					if (!precon.exists) valid = false;
-				}
-				if(valid) currentNodes.push_back(ot);
-			}
-			//Broodwar << ut.getName() << " : " << ot.selfType.getName() << std::endl;
-		}
-		//Broodwar << ut.getName() << std::endl;
-	}//Make our initial nodes that cannot be planned, as they're already fulfilled.
-
-	//Broodwar << std::to_string(currentNodes.size()).c_str() << std::endl;
-	if (currentNodes.size() == 0){
-		return;
-	}
-
-	std::vector<TechNode> possibleNodes = currentNodes;
-	for (int i = 0; i < currentNodes.size(); i++){
-		for (int i2 = 0; i2 < currentNodes.at(i).effect.size(); i2++){
-			bool valid = true;
-			for (auto precon : currentNodes.at(i).effect.at(i2).precondition){
-				if (!precon.exists) valid = false;
-			}
-			if (valid) possibleNodes.push_back(currentNodes.at(i).effect.at(i2));
-		}
-	}//PossibleNodes contain all possible things to be constructed.
-
-	std::vector<TechNode> newPossibleNodes;
-	for (int i = 0; i < possibleNodes.size(); i++){//Temporary solution for derp comsat
+UnitType BuildingPlanner::makePlan(){
+	std::vector<TechNode> possibleNodes;
+	for (int i = 0; i < InformationManager::ourTech.size(); i++){
 		bool valid = true;
-		for (auto precon : possibleNodes.at(i).precondition){
-			if (!precon.exists) valid = false;//HOW DOESN'T THIS WORK?!
+		for (int i2 = 0; i2 < InformationManager::ourTech.at(i).precondition.size(); i2++){
+			if (!InformationManager::ourTech.at(i).precondition.at(i2).exists) {
+				valid = false;
+				break;
+			}
 		}
-		if (valid) newPossibleNodes.push_back(possibleNodes.at(i));
-	}
-	std::string derp;
-	for (int i = 0; i < newPossibleNodes.size(); i++){
-		for (auto FUCKTHISSHIT : newPossibleNodes.at(i).precondition){
-			derp += FUCKTHISSHIT.selfType.getName() + "\n";
+		if (valid){
+			possibleNodes.push_back(InformationManager::ourTech.at(i));
 		}
 	}
-	Debug::writeLog(derp,"FAAAAAK","FAAAAK");
-	
-	possibleNodes = newPossibleNodes;
 
 	std::vector<int> possibleNodesHeuristics;
 
@@ -81,9 +46,28 @@ void BuildingPlanner::makePlan(){
 		}
 	}
 
+	/*std::string validUnits;
+	for (int i = 0; i < InformationManager::ourTech.size(); i++){
+		bool valid = true;
+		for (int i2 = 0; i2 < InformationManager::ourTech.at(i).precondition.size(); i2++){
+			if (!InformationManager::ourTech.at(i).precondition.at(i2).exists) {
+				valid = false;
+				break;
+			}
+		}
+		if (valid){
+			validUnits += "Valid : " + InformationManager::ourTech.at(i).selfType.getName() + "\n";
+		}
+		else {
+			validUnits += "Invalid : " + InformationManager::ourTech.at(i).selfType.getName() + "\n";
+		}
+	}
+	Debug::writeLog(validUnits,"Logs","validUnits");*/
+
 	//TODO: Handle unresearched technologies.
 	//TODO: Order chosenID's type to be constructed.
 	Broodwar << possibleNodes.at(chosenID).selfType.getName() << " : " << std::to_string(chosenHeuristicsValue).c_str() << std::endl;
+	return UnitType(possibleNodes.at(chosenID).selfType);
 }
 
 int BuildingPlanner::heuristic(TechNode node){//Temporary function to calculate simple heuristical values.

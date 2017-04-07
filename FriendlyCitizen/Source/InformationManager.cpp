@@ -68,6 +68,9 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 		else if (t == InformationManager::ourRace.getWorker()){
 			tempNode.exists = true;
 		}
+		else {
+			tempNode.exists = false;
+		}
 		tempNodes.push_back(tempNode);
 	}
 
@@ -135,6 +138,7 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 			temp += tempNodes.at(i).precondition.at(i2).selfType.c_str();
 			temp += "\n";
 		}
+		temp += "\nThis unit exists: " + std::to_string(tempNodes.at(i).exists);
 		Debug::writeLog(temp.c_str(), tempNodes.at(i).selfType.getName().c_str(), InformationManager::ourRace.getName().c_str());
 	}
 
