@@ -1,5 +1,7 @@
 #include "BuildingPlanner.h"
 #include "InformationManager.h"
+#include <iostream>
+
 
 
 void BuildingPlanner::plannerOnFrame(){
@@ -18,7 +20,7 @@ UnitType BuildingPlanner::makePlan(){
 	for (int i = 0; i < InformationManager::ourTech.size(); i++){
 		bool valid = true;
 		for (int i2 = 0; i2 < InformationManager::ourTech.at(i).precondition.size(); i2++){
-			if (!InformationManager::ourTech.at(i).precondition.at(i2).exists) {
+			if (!InformationManager::ourTech.at(i).precondition.at(i2)->exists) {
 				valid = false;
 				break;
 			}
@@ -63,10 +65,19 @@ UnitType BuildingPlanner::makePlan(){
 		}
 	}
 	Debug::writeLog(validUnits,"Logs","validUnits");*/
-
+	
 	//TODO: Handle unresearched technologies.
 	//TODO: Order chosenID's type to be constructed.
-	Broodwar << possibleNodes.at(chosenID).selfType.getName() << " : " << std::to_string(chosenHeuristicsValue).c_str() << std::endl;
+	std::string plan = possibleNodes.at(chosenID).selfType.getName() +  " : " + std::to_string(chosenHeuristicsValue);
+	Broodwar->drawTextScreen(20, 60, plan.c_str());
+
+	std::string nodes = "Nodes: \n";
+	for (int i = 0; i < possibleNodes.size(); i++){
+		nodes += possibleNodes.at(i).selfType.toString() + " [" + std::to_string(possibleNodesHeuristics.at(i)) + "] \n";
+	}
+	Debug::writeLog(nodes, "heuristics", "Logs");
+	//Broodwar << possibleNodes.at(chosenID).selfType.getName() << " : " << std::to_string(chosenHeuristicsValue).c_str() << std::endl;
+	
 	return UnitType(possibleNodes.at(chosenID).selfType);
 }
 
@@ -79,6 +90,7 @@ int BuildingPlanner::heuristic(TechNode node){//Temporary function to calculate 
 	int saturation = 0;
 	for (auto us : InformationManager::ourUnits){
 		if (us.self->getType() == node.selfType) saturation += 10;
+		if (us.self->getType() == node.selfType && node.selfType == InformationManager::ourRace.getRefinery()) saturation += 200;
 	}
 	if (InformationManager::ourRace.getWorker() == node.selfType) saturation -= 100;//We want SOME workers!
 	//Balance heuristics: Too many units of one of the three catagories is probably bad.
@@ -122,13 +134,14 @@ int BuildingPlanner::heuristic(TechNode node){//Temporary function to calculate 
 	}
 	else if (node.selfType.canAttack()){//Military
 		balanceValue += (int)(0 - balanceEconomy * 0.3 + balanceMilitary * 0.2 - balanceTech * 0.5);
+		balanceValue -= node.selfType.groundWeapon().damageAmount()*3;
 	}
 	else {//Tech
 		balanceValue += (int)(0 - balanceEconomy * 0.3 - balanceMilitary * 0.2 + balanceTech * 0.5);
 		//Tech satiation: Tech buildings that already exists are pointless.
 		for (auto ut : InformationManager::ourUnitTypes){
 			if (ut == node.selfType){
-				value += 1000;
+				balanceValue += 1000;
 			}
 		}
 	}

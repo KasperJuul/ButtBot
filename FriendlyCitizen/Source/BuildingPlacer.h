@@ -14,7 +14,8 @@ public:
 	static bool xpandIsBeingBuild;
 	static void onStart();
 	static void onFrame();
-	static BWAPI::TilePosition getBuildTile(Unit builder, UnitType buildingType, TilePosition aroundTile);
+	static void createType(BWAPI::UnitType unit);
+	static BWAPI::TilePosition getBuildTile(UnitType buildingType, TilePosition aroundTile);
 	static BWAPI::TilePosition naturalExpantion();
 
 };

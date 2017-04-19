@@ -11,7 +11,10 @@ std::vector<Unit> InformationManager::firstWorkers; //Swap out with better, gene
 BWTA::BaseLocation* InformationManager::mainBase;
 std::vector<workerUnit> InformationManager::wrkUnits;
 std::vector<Center> InformationManager::centers;
+std::vector<UnitType> InformationManager::orderedBuildings;
 
+int InformationManager::reservedMinerals;
+int InformationManager::reservedGas;
 bool InformationManager::enemyFound;
 bool InformationManager::enemyBaseFound;
 bool InformationManager::initialScoutDestroyed;
@@ -29,6 +32,8 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	InformationManager::initialScoutDestroyed = false;
 
 	//Basic data
+	reservedMinerals = 0;
+	reservedGas = 0;
 	InformationManager::ourRace = Broodwar->self()->getRace(); //Gets our current race
 	
 	UnitType::set totalSet = InformationManager::ourRace.getWorker().buildsWhat();//Tech tree code start
@@ -52,7 +57,7 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	else {
 		baseTech = UnitTypes::Zerg_Larva;
 	}
-	std::vector<TechNode> tempNodes;
+	//std::vector<TechNode> tempNodes;
 	for (auto t : totalSet){
 		TechNode tempNode;
 		tempNode.selfType = t;
@@ -71,28 +76,28 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 		else {
 			tempNode.exists = false;
 		}
-		tempNodes.push_back(tempNode);
+		InformationManager::ourTech.push_back(tempNode);
 	}
 
-	for (unsigned int i = 0; i < tempNodes.size(); i++){//For every node, we want to fill up the node's effect and precon vectors
-		for (auto u : tempNodes.at(i).selfType.buildsWhat()){//For each object that the current node can build..
-			for (unsigned int i2 = 0; i2 < tempNodes.size(); i2++){//We try to find its corresponding node
-				if (tempNodes.at(i2).selfType == u){
-					tempNodes.at(i).effect.push_back(tempNodes.at(i2));
+	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){//For every node, we want to fill up the node's effect and precon vectors
+		for (auto u : InformationManager::ourTech.at(i).selfType.buildsWhat()){//For each object that the current node can build..
+			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
+				if (InformationManager::ourTech.at(i2).selfType == u){
+					InformationManager::ourTech.at(i).effect.push_back(&InformationManager::ourTech.at(i2));
 				}
 			}
 		}
-		for (auto u : tempNodes.at(i).selfType.requiredUnits()){
-			for (unsigned int i2 = 0; i2 < tempNodes.size(); i2++){
-				if (tempNodes.at(i2).selfType == u.first){
-					tempNodes.at(i).precondition.push_back(tempNodes.at(i2));
+		for (auto u : InformationManager::ourTech.at(i).selfType.requiredUnits()){
+			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){
+				if (InformationManager::ourTech.at(i2).selfType == u.first){
+					InformationManager::ourTech.at(i).precondition.push_back(&InformationManager::ourTech.at(i2));
 				}
 			}
 		}
-		if (tempNodes.at(i).selfType.producesLarva()){
-			for (unsigned int i2 = 0; i2 < tempNodes.size(); i2++){//We try to find its corresponding node
-				if (tempNodes.at(i2).selfType == UnitTypes::Zerg_Larva){
-					tempNodes.at(i).effect.push_back(tempNodes.at(i2));
+		if (InformationManager::ourTech.at(i).selfType.producesLarva()){
+			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
+				if (InformationManager::ourTech.at(i2).selfType == UnitTypes::Zerg_Larva){
+					InformationManager::ourTech.at(i).effect.push_back(&InformationManager::ourTech.at(i2));
 				}
 			}
 		}
@@ -115,34 +120,34 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	std::string testAbove = InformationManager::firstCenter->getType().getName();//Tests if the above works. Manual test: See that the printed name equates the base type
 	Broodwar->sendText(testAbove.c_str());
 
-	std::string testTech = tempNodes.at(0).selfType.toString();
+	std::string testTech = InformationManager::ourTech.at(0).selfType.toString();
 	std::string testTech2;
 	Broodwar->sendText(testTech.c_str());
-	for (unsigned int i = 0; i < tempNodes.size(); i++){
-		if (tempNodes.at(i).selfType == InformationManager::ourRace.getWorker()){
-			testTech = tempNodes.at(i).effect.at(6).selfType.toString();
-			testTech2 = tempNodes.at(i).precondition.at(0).selfType.toString();
+	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
+		if (InformationManager::ourTech.at(i).selfType == InformationManager::ourRace.getWorker()){
+			testTech = InformationManager::ourTech.at(i).effect.at(6)->selfType.toString();
+			testTech2 = InformationManager::ourTech.at(i).precondition.at(0)->selfType.toString();
 		}
 	}
 	Broodwar->sendText(testTech.c_str());//Should write out the name of something a worker can build
 	Broodwar->sendText(testTech2.c_str());//Should write out the command-center or larva if zerg
 
-	for (unsigned int i = 0; i < tempNodes.size(); i++){
+	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
 		std::string temp = "This unit builds:\n";
-		for (unsigned int i2 = 0; i2 < tempNodes.at(i).effect.size(); i2++){
-			temp += tempNodes.at(i).effect.at(i2).selfType.c_str();
+		for (unsigned int i2 = 0; i2 < InformationManager::ourTech.at(i).effect.size(); i2++){
+			temp += InformationManager::ourTech.at(i).effect.at(i2)->selfType.c_str();
 			temp += "\n";
 		}
 		temp += "\nThis unit requires:\n";
-		for (unsigned int i2 = 0; i2 < tempNodes.at(i).precondition.size(); i2++){
-			temp += tempNodes.at(i).precondition.at(i2).selfType.c_str();
+		for (unsigned int i2 = 0; i2 < InformationManager::ourTech.at(i).precondition.size(); i2++){
+			temp += InformationManager::ourTech.at(i).precondition.at(i2)->selfType.c_str();
 			temp += "\n";
 		}
-		temp += "\nThis unit exists: " + std::to_string(tempNodes.at(i).exists);
-		Debug::writeLog(temp.c_str(), tempNodes.at(i).selfType.getName().c_str(), InformationManager::ourRace.getName().c_str());
+		temp += "\nThis unit exists: " + std::to_string(InformationManager::ourTech.at(i).exists);
+		Debug::writeLog(temp.c_str(), InformationManager::ourTech.at(i).selfType.getName().c_str(), InformationManager::ourRace.getName().c_str());
 	}
 
-	InformationManager::ourTech = tempNodes;
+	//InformationManager::ourTech = tempNodes;
 
 
 	//Adding units to our manual structs.
@@ -176,8 +181,9 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 		if (!found){
 			InformationManager::ourUnits.insert(temp);
 			InformationManager::ourUnitTypes.insert(unit->getType());
-			for (auto ot : InformationManager::ourTech){
+			for (auto &ot : InformationManager::ourTech){
 				if (ot.selfType == unit->getType()){
+					Broodwar << "It gets called \n";
 					ot.exists = true;
 				}
 			}
