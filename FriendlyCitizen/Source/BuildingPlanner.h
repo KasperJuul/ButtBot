@@ -9,7 +9,7 @@
 
 class BuildingPlanner{
 public:
-	static void makePlan();
+	static BWAPI::UnitType makePlan();
 	static void plannerOnFrame();
 	static int heuristic(TechNode node);
 };

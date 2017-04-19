@@ -73,7 +73,6 @@ void IntelManager::ScoutOnFrame(){
 				if (IntelManager::scout.self->getType().sightRange() / 2 > IntelManager::scout.self->getDistance(u->getPosition())){
 					IntelManager::remainingLocations.erase(u);
 				}
-				BWAPI::Broodwar << "It's trying to spy, but standard implementation is blocking it";
 				break;
 			}
 		}
@@ -84,7 +83,6 @@ void IntelManager::ScoutOnFrame(){
 				if (IntelManager::scout.self->getType().sightRange()/2 > IntelManager::scout.self->getDistance(u->getPosition())){
 					IntelManager::remainingLocations.erase(u);
 				}
-				BWAPI::Broodwar << "It's trying to spy, but standard implementation is blocking it";
 				break;
 			}
 		}

@@ -11,11 +11,11 @@
 using namespace BWAPI;
 
 struct TechNode{
-	std::vector<TechNode> precondition; //Points back to nodes that are required for this unit to be build.
+	std::vector<TechNode *> precondition; //Points back to nodes that are required for this unit to be build.
 	UnitType selfType; //This unit.
 	bool exists = false;
 	//int nodeCost = INT_MAX; //How many resources will this cost?
-	std::vector<TechNode> effect; //Points to nodes that can be built by this node.
+	std::vector<TechNode *> effect; //Points to nodes that can be built by this node.
 };
 
 struct UnitStatus{
@@ -27,12 +27,15 @@ struct UnitStatus{
 struct workerUnit{
 	BWAPI::Unit unit;
 	ResourceManager::mineralPatch* mineral;
+	TilePosition buildTile;
+	UnitType buildUnit;
 	std::string status;		// Idle, Mining, Returning Cargo, Waiting,
 };
 
 struct Center{
 	BWAPI::Unit unit;
 	std::vector<workerUnit> wrkUnits;
+	std::vector<Unit> barracks;
 };
 
 inline bool operator<(const UnitStatus& lhs, const UnitStatus& rhs)
@@ -66,6 +69,8 @@ public:
 	static std::vector<TechNode> theirTech;
 
 	//Information - Dynamic
+	static int reservedMinerals;
+	static int reservedGas;
 	static std::set<UnitStatus> ourUnits; //Catalogues the units we have
 	static std::set<UnitType> ourUnitTypes; //Catalogues the unittypes we have
 
@@ -75,5 +80,6 @@ public:
 	static std::vector<BWTA::BaseLocation*> baseLocations;
 	static BWTA::BaseLocation* mainBase;
 	static std::vector<workerUnit> wrkUnits;
-	static std::vector<Center> centers;
+	static std::vector<Center> centers; 
+	static std::vector<UnitType> orderedBuildings;
 };
