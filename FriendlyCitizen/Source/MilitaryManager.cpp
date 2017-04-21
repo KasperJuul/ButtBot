@@ -5,11 +5,17 @@
 #include <iostream>
 #include <vector>
 
+
 void MilitaryManager::onFrame(){
 	std::vector<BWAPI::Unit> military;
 	for (auto &u : Broodwar->self()->getUnits()){
-		if (u->canAttack() && !u->getType().isWorker() && !u->isAttacking() && !u->isMoving() && u->isCompleted()){
-			u->attack((BWAPI::Position) BWAPI::Broodwar->enemy()->getStartLocation());
+		if (!u->getType().isWorker() && u->getType().canAttack() && u->isIdle()){
+			military.push_back(u);
+		}	
+	}
+	if (military.size() > 5){
+		for (auto &u : military){
+			u->attack(u->getClosestUnit(Filter::IsEnemy)->getPosition());
 		}
 	}
 

@@ -2,7 +2,7 @@
 #include "InformationManager.h"
 #include <iostream>
 
-
+std::string BuildingPlanner::plan;
 
 void BuildingPlanner::plannerOnFrame(){
 
@@ -68,8 +68,7 @@ UnitType BuildingPlanner::makePlan(){
 	
 	//TODO: Handle unresearched technologies.
 	//TODO: Order chosenID's type to be constructed.
-	std::string plan = possibleNodes.at(chosenID).selfType.getName() +  " : " + std::to_string(chosenHeuristicsValue);
-	Broodwar->drawTextScreen(20, 60, plan.c_str());
+	plan = possibleNodes.at(chosenID).selfType.getName() +  " : " + std::to_string(chosenHeuristicsValue);
 
 	std::string nodes = "Nodes: \n";
 	for (int i = 0; i < possibleNodes.size(); i++){

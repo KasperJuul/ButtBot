@@ -15,7 +15,7 @@ using namespace Filter;
 //Debug settings
 bool dbg_mode = true;
 bool debug = true;
-bool defog = false;
+bool defog = true;
 bool analyzed = false;
 bool analysis_just_finished;
 int optimisation = 2; //Using built-in bwapi optimisation
@@ -53,6 +53,8 @@ void FriendlyCitizen::onStart()
 
 	//Broodwar->sendText("black sheep wall");
 	//Broodwar->sendText("operation cwal");
+	//Broodwar->sendText("black sheep wall");
+	
 
 }
 
@@ -87,69 +89,23 @@ void FriendlyCitizen::onFrame()
 	Broodwar->drawTextScreen(200, 0, "FPS: %d", Broodwar->getFPS());
 	Broodwar->drawTextScreen(200, 20, "Average FPS: %f", Broodwar->getAverageFPS());
 
+	if (dbg_mode){
+		Debug::screenInfo();
+	}
+
 	if (Broodwar->getFrameCount() % 40 == 0){
 		minelog += std::to_string(Broodwar->getFrameCount()) +
-		", " + std::to_string(Broodwar->self()->gatheredMinerals()) +
-		", " + std::to_string(InformationManager::wrkUnits.size()) + "\n";
+			", " + std::to_string(Broodwar->self()->gatheredMinerals()) +
+			", " + std::to_string(InformationManager::wrkUnits.size()) + "\n";
 	}
 
-	/*for (unsigned int i = 0; i < ResourceManager::minPatches.size(); i++){
-		std::string s = "M" + std::to_string(i) + ": ";
-		for (unsigned int j = 0; j < ResourceManager::minPatches.at(i).workers.size(); j++){
-			s += "[" + std::to_string(ResourceManager::minPatches.at(i).workers.at(j)->getID()) + "] ";
-		}
-		Broodwar->drawTextScreen(20, 40 + (i*10), s.c_str());
-		Broodwar->drawTextMap(ResourceManager::minPatches.at(i).unit->getPosition(), "M%d", i);
-	}*/
-	
-	for (auto &u : Broodwar->self()->getUnits()){
-		if (u->getType().isWorker()){
-			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::Blue, u->getID());
-		}
-		else if (u->getType().isResourceDepot()){
-			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::Orange, u->getID());
-		}
-		else{
-			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::BrightRed, u->getID());
-		}
-
-	}
-	for (auto &u : Broodwar->enemy()->getUnits()){
-		if (u->getType().isResourceDepot()){
-			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::Orange, u->getID());
-		}
-	}
-
-	//std::string w = "Workers:";
-	std::string derp = "Base 1:  " + std::to_string(InformationManager::centers.at(0).unit->getID());
-	std::string w = "Workers: " + std::to_string(InformationManager::centers.at(0).wrkUnits.size());
-	std::string b = "Centers: " + std::to_string(InformationManager::centers.size());
-	for (unsigned int i = 0; i < InformationManager::wrkUnits.size(); i++){
-		//w += " [" + std::to_string(ResourceManager::wrkUnits.at(i).unit->getID()) + "]";
-		Position po = Position(InformationManager::wrkUnits.at(i).unit->getPosition().x - 10, InformationManager::wrkUnits.at(i).unit->getPosition().y - 10);
-		Broodwar->drawTextMap(po, InformationManager::wrkUnits.at(i).status.c_str());
-	}
-	Broodwar->drawTextScreen(20, 30, derp.c_str());
-	Broodwar->drawTextScreen(20, 40, w.c_str());
-	Broodwar->drawTextScreen(20, 50, b.c_str());
-
-	//Broodwar->drawTextScreen(20, 40, "M1: %d %d", ResourceManager::minPatches.at(0).workers[0]->getID(), ResourceManager::minPatches.at(0).workers[1]->getID());
-	//Broodwar->drawTextScreen(20, 50, "M2: %d", ResourceManager::minPatches.at(1).workers[0]->getID());
-	if (dbg_mode){
-		Broodwar->drawTextScreen(20, 0, "Supply used: %d", Broodwar->self()->supplyUsed() / 2);
-		Broodwar->drawTextScreen(20, 20, "Supply total: %d", BWAPI::Broodwar->self()->supplyTotal() / 2);
-		Broodwar->drawTextScreen(20, 70, "reservedMinerals: %d", InformationManager::reservedMinerals);
-		Broodwar->drawTextScreen(20, 80, "reservedGas: %d", InformationManager::reservedGas);
-		//ResourceManager::drawMinCircles();
-	}
-	
 	// Return if the game is a replay or is paused
 	if (Broodwar->isReplay() || Broodwar->isPaused() || !Broodwar->self())
 		return;
-
+	drawTerrainData();
 	//BWTA draw
-	//if (analyzed)
-		//drawTerrainData();
+	if (analyzed)
+		drawTerrainData();
 
 	if (analysis_just_finished)
 	{
@@ -165,7 +121,7 @@ void FriendlyCitizen::onFrame()
 	//Onframe functionality.
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
-	//IntelManager::ScoutOnFrame();
+	IntelManager::ScoutOnFrame();
 	MilitaryManager::onFrame();
 	
 }
@@ -263,7 +219,7 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 			InformationManager::reservedGas -= unit->getType().gasPrice();
 		}
 	}
-	InformationManager::OnNewUnit(unit);
+	//InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
 	{
 		// if we are in a replay, then we will print out the build order of the structures
@@ -352,7 +308,6 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 			temp.unit = unit;
 			temp.status = "Idle";
 			Unit center = unit->getClosestUnit(IsResourceDepot);
-			Broodwar << "center = " << std::to_string(center->getID()) << std::endl;
 			for (auto &c : InformationManager::centers){
 				if (c.unit == center){
 					c.wrkUnits.push_back(temp);
