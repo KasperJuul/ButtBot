@@ -8,10 +8,16 @@
 void MilitaryManager::onFrame(){
 	std::vector<BWAPI::Unit> military;
 	for (auto &u : Broodwar->self()->getUnits()){
-		if (u->canAttack() && !u->getType().isWorker() && !u->isAttacking() && !u->isMoving() && u->isCompleted()){
+		if (!u->getType().isWorker() && u->getType().canAttack() && u->isIdle()){
+			military.push_back(u);
+			
+		}	
+	}
+	if (military.size() > 5){
+		for (auto &u : military){
 			for (EnemyUnit eu : InformationManager::enemyUnits){
-				Unit temp = *eu.selfCopy;
-				u->attack((BWAPI::Position) temp->getPosition());
+				u->attack(eu.lastSeen);
+				Broodwar << "Attack!! \n";
 				break;
 			}
 		}

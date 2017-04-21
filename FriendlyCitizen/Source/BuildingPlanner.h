@@ -12,4 +12,5 @@ public:
 	static BWAPI::UnitType makePlan();
 	static void plannerOnFrame();
 	static int heuristic(TechNode node);
+	static std::string plan;
 };

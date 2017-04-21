@@ -1,6 +1,7 @@
 #include "BuildingPlacer.h"
 #include "BuildingPlanner.h"
 #include "InformationManager.h"
+#include "IntelManager.h"
 #include "Debug.h"
 #include "ResourceManager.h"
 
@@ -35,7 +36,8 @@ void BuildingPlacer::onFrame(){
 			}
 			if (!inProgress){
 				for (workerUnit &myUnit : InformationManager::centers.at(0).wrkUnits) {
-					if (myUnit.status == "Idle" || myUnit.status == "Returning Cargo") {
+
+					if ((myUnit.status == "Idle" || myUnit.status == "Returning Cargo") && myUnit.unit != IntelManager::scout.self) {
 						//get a nice place to build a supply depot
 						TilePosition buildTile = getBuildTile(toBuild, Broodwar->self()->getStartLocation());
 						//and, if found, send the worker to build it (and leave others alone - break;)
@@ -67,7 +69,7 @@ void BuildingPlacer::onFrame(){
 		}
 		else{
 			for (auto &u : Broodwar->self()->getUnits()){//Tp be refactored with more dynamic code
-				if (u->canTrain(toBuild)){
+				if (u->canTrain(toBuild) && u->isIdle()){
 					u->train(toBuild);
 					Broodwar << u->getType().toString() << " is building " << toBuild.toString() << std::endl;
 					break;
