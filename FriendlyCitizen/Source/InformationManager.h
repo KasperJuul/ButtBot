@@ -12,7 +12,9 @@ using namespace BWAPI;
 
 struct EnemyUnit{
 	Unit self;//This unit (pointer)
-	Unit* selfCopy;//This unit (local copy)
+	UnitType selfType;
+	Position lastSeen;
+	int selfID;
 };
 
 struct TechNode{

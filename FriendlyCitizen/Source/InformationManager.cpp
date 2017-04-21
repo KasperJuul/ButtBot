@@ -184,21 +184,26 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 			InformationManager::ourUnitTypes.insert(unit->getType());
 			for (auto &ot : InformationManager::ourTech){
 				if (ot.selfType == unit->getType()){
-					Broodwar << "It gets called \n";
 					ot.exists = true;
 				}
 			}
 		}
 	}
 	else if(unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
+		Broodwar << "Enemy found! \n";
 		EnemyUnit enemy;
 		enemy.self = unit;
-		enemy.selfCopy = new Unit(unit);
+		enemy.selfID = unit->getID();
+		enemy.selfType = unit->getType();
+		enemy.lastSeen = unit->getPosition();
+		bool newUnit = true;;
 		for (auto e : InformationManager::enemyUnits){
-			Unit temp = *e.selfCopy;
-			if (temp->getID() != unit->getID()){
-				InformationManager::enemyUnits.push_back(enemy);
+			if (e.self->getID() == unit->getID()){
+				newUnit = false;
 			}
+		}
+		if (newUnit){
+			InformationManager::enemyUnits.push_back(enemy);
 		}
 	}
 	else {//Neutral units.
@@ -233,8 +238,7 @@ void InformationManager::OnUnitDestroy(Unit unit){
 	else if (unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
 		std::vector<EnemyUnit> tempVector;
 		for (auto e : InformationManager::enemyUnits){
-			Unit temp = *e.selfCopy;
-			if (temp->getID() != unit->getID()){
+			if (e.selfID != unit->getID()){
 				tempVector.push_back(e);
 			}
 		}
