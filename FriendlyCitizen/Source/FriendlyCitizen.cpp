@@ -1,7 +1,7 @@
 #include "FriendlyCitizen.h"
 #include <BWTA.h>
 #include <iostream>
-#include <cppunit/TestCase.h>
+//#include <cppunit/TestCase.h>
 #include "InformationManager.h"
 #include "ResourceManager.h"
 #include "IntelManager.h"
@@ -54,7 +54,6 @@ void FriendlyCitizen::onStart()
 	//Broodwar->sendText("black sheep wall");
 	//Broodwar->sendText("operation cwal");
 	//Broodwar->sendText("black sheep wall");
-	
 
 }
 
@@ -219,6 +218,7 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 			InformationManager::reservedGas -= unit->getType().gasPrice();
 		}
 	}
+
 	//InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
 	{

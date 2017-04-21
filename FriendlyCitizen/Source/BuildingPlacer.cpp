@@ -25,6 +25,7 @@ void BuildingPlacer::onFrame(){
 		InformationManager::reservedMinerals = 0;
 	}
 
+
 	if (toBuild.mineralPrice() <= Broodwar->self()->minerals() && toBuild.gasPrice() <= Broodwar->self()->gas()){
 		if (toBuild.isBuilding()){
 			bool inProgress = false;
@@ -35,6 +36,7 @@ void BuildingPlacer::onFrame(){
 			}
 			if (!inProgress){
 				for (workerUnit &myUnit : InformationManager::centers.at(0).wrkUnits) {
+
 					if ((myUnit.status == "Idle" || myUnit.status == "Returning Cargo") && myUnit.unit != IntelManager::scout.self) {
 						//get a nice place to build a supply depot
 						TilePosition buildTile = getBuildTile(toBuild, Broodwar->self()->getStartLocation());

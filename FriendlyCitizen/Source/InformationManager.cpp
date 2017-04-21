@@ -12,6 +12,7 @@ BWTA::BaseLocation* InformationManager::mainBase;
 std::vector<workerUnit> InformationManager::wrkUnits;
 std::vector<Center> InformationManager::centers;
 std::vector<UnitType> InformationManager::orderedBuildings;
+std::vector<EnemyUnit> InformationManager::enemyUnits;
 
 int InformationManager::reservedMinerals;
 int InformationManager::reservedGas;
@@ -190,7 +191,15 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 		}
 	}
 	else if(unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
-		//Unimplemented
+		EnemyUnit enemy;
+		enemy.self = unit;
+		enemy.selfCopy = new Unit(unit);
+		for (auto e : InformationManager::enemyUnits){
+			Unit temp = *e.selfCopy;
+			if (temp->getID() != unit->getID()){
+				InformationManager::enemyUnits.push_back(enemy);
+			}
+		}
 	}
 	else {//Neutral units.
 		//Unimplemented
@@ -222,7 +231,14 @@ void InformationManager::OnUnitDestroy(Unit unit){
 		}
 	}
 	else if (unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
-		//Unimplemented
+		std::vector<EnemyUnit> tempVector;
+		for (auto e : InformationManager::enemyUnits){
+			Unit temp = *e.selfCopy;
+			if (temp->getID() != unit->getID()){
+				tempVector.push_back(e);
+			}
+		}
+		InformationManager::enemyUnits = tempVector;
 	}
 	else {//Neutral units.
 		//Unimplemented
