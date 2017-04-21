@@ -10,6 +10,11 @@
 
 using namespace BWAPI;
 
+struct EnemyUnit{
+	Unit self;//This unit (pointer)
+	Unit* selfCopy;//This unit (local copy)
+};
+
 struct TechNode{
 	std::vector<TechNode *> precondition; //Points back to nodes that are required for this unit to be build.
 	UnitType selfType; //This unit.
@@ -73,6 +78,7 @@ public:
 	static int reservedGas;
 	static std::set<UnitStatus> ourUnits; //Catalogues the units we have
 	static std::set<UnitType> ourUnitTypes; //Catalogues the unittypes we have
+	static std::vector<EnemyUnit> enemyUnits;//Catalogues enemy units
 
 	//Depcrecated - To be refactored.
 	static Unit firstCenter; //Swap out with better, generalized functionality later

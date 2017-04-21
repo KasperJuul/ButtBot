@@ -9,7 +9,11 @@ void MilitaryManager::onFrame(){
 	std::vector<BWAPI::Unit> military;
 	for (auto &u : Broodwar->self()->getUnits()){
 		if (u->canAttack() && !u->getType().isWorker() && !u->isAttacking() && !u->isMoving() && u->isCompleted()){
-			u->attack((BWAPI::Position) BWAPI::Broodwar->enemy()->getStartLocation());
+			for (EnemyUnit eu : InformationManager::enemyUnits){
+				Unit temp = *eu.selfCopy;
+				u->attack((BWAPI::Position) temp->getPosition());
+				break;
+			}
 		}
 	}
 

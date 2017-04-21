@@ -1,7 +1,7 @@
 #include "FriendlyCitizen.h"
 #include <BWTA.h>
 #include <iostream>
-#include <cppunit/TestCase.h>
+//#include <cppunit/TestCase.h>
 #include "InformationManager.h"
 #include "ResourceManager.h"
 #include "IntelManager.h"
