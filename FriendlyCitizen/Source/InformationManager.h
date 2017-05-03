@@ -6,9 +6,17 @@
 #include "UnitState.h"
 #include "OwnerProcess.h"
 #include "ResourceManager.h"
+#include "CostumUnit.h"
 #include <set>
 
 using namespace BWAPI;
+
+
+
+// ################### REFACTOR #########################
+
+//######################################################################################################
+
 
 struct EnemyUnit{
 	Unit self;//This unit (pointer)
@@ -90,4 +98,18 @@ public:
 	static std::vector<workerUnit> wrkUnits;
 	static std::vector<Center> centers; 
 	static std::vector<UnitType> orderedBuildings;
+
+	//######################### REFACTOR #########################################
+	//Information storage functions
+	static void OnNewUnit2(Unit unit);
+	static void OnUnitDestroy2(Unit unit);
+
+	static std::vector<CostumUnit*> costumUnits;
+	static std::vector<ProductionBuilding*> productionBuildings;
+	static std::vector<TechBuilding*> techBuildings;
+	static std::vector<MilitaryBuilding*> militaryBuildings;
+	static std::vector<MilitaryUnit*> militaryUnits;
+	static std::vector<WorkerUnit*> workerUnits;
+
+	//############################################################################
 };

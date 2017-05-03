@@ -1,3 +1,4 @@
+#pragma once
 #include "MilitaryManager.h"
 #include "InformationManager.h"
 #include "Debug.h"

@@ -1,3 +1,4 @@
+#pragma once
 #include "FriendlyCitizen.h"
 #include <BWTA.h>
 #include <iostream>
@@ -15,7 +16,7 @@ using namespace Filter;
 //Debug settings
 bool dbg_mode = true;
 bool debug = true;
-bool defog = true;
+bool defog = false;
 bool analyzed = false;
 bool analysis_just_finished;
 int optimisation = 2; //Using built-in bwapi optimisation
@@ -53,7 +54,7 @@ void FriendlyCitizen::onStart()
 
 	//Broodwar->sendText("black sheep wall");
 	//Broodwar->sendText("operation cwal");
-	//Broodwar->sendText("black sheep wall");
+	Broodwar->sendText("black sheep wall");
 
 }
 
@@ -117,6 +118,7 @@ void FriendlyCitizen::onFrame()
 	if (Broodwar->getFrameCount() % Broodwar->getLatencyFrames() != 0)
 		return;
 	
+
 	//Onframe functionality.
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
@@ -187,7 +189,7 @@ void FriendlyCitizen::onNukeDetect(BWAPI::Position target)//Infomanager low prio
 
 void FriendlyCitizen::onUnitDiscover(BWAPI::Unit unit)
 {
-	InformationManager::OnNewUnit(unit);
+	//InformationManager::OnNewUnit2(unit);
 }
 
 void FriendlyCitizen::onUnitEvade(BWAPI::Unit unit)
@@ -204,20 +206,7 @@ void FriendlyCitizen::onUnitHide(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 {
-	if (unit->getPlayer() == Broodwar->self()){
-		if (unit->getType().isBuilding()){
-			int itr = 0;
-			for (auto &b : InformationManager::orderedBuildings){
-				if (b == unit->getType()){
-					InformationManager::orderedBuildings.erase(InformationManager::orderedBuildings.begin() + itr);
-					break;
-				}
-				itr++;
-			}
-			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
-			InformationManager::reservedGas -= unit->getType().gasPrice();
-		}
-	}
+
 
 	//InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
@@ -235,13 +224,13 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 {
-	InformationManager::OnUnitDestroy(unit);
+	InformationManager::OnUnitDestroy2(unit);
 }
 
 void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
 {
-	InformationManager::OnUnitDestroy(unit);
-	InformationManager::OnNewUnit(unit);
+	InformationManager::OnUnitDestroy2(unit);
+	InformationManager::OnNewUnit2(unit);
 	if (Broodwar->isReplay())
 	{
 		// if we are in a replay, then we will print out the build order of the structures
@@ -286,8 +275,21 @@ void FriendlyCitizen::onSaveGame(std::string gameName)
 
 void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 {
-
-	InformationManager::OnNewUnit(unit);
+	if (unit->getPlayer() == Broodwar->self()){
+		if (unit->getType().isBuilding()){
+			int itr = 0;
+			for (auto &b : InformationManager::orderedBuildings){
+				if (b == unit->getType()){
+					InformationManager::orderedBuildings.erase(InformationManager::orderedBuildings.begin() + itr);
+					break;
+				}
+				itr++;
+			}
+			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
+			InformationManager::reservedGas -= unit->getType().gasPrice();
+		}
+	}
+	InformationManager::OnNewUnit2(unit);
 	if (unit->getPlayer() == Broodwar->self()){
 		if (unit->getType().isResourceDepot()){
 			Center temp;
@@ -303,18 +305,7 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 			}
 			BuildingPlacer::xpandIsBeingBuild = false;
 		}
-		if (unit->getType().isWorker()){
-			workerUnit temp;
-			temp.unit = unit;
-			temp.status = "Idle";
-			Unit center = unit->getClosestUnit(IsResourceDepot);
-			for (auto &c : InformationManager::centers){
-				if (c.unit == center){
-					c.wrkUnits.push_back(temp);
-				}
-			}
-			//InformationManager::wrkUnits.push_back(temp);
-		}
+
 
 		if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
 			BuildingPlacer::supplyProviderIsBeingBuild = false;
@@ -377,5 +368,6 @@ void FriendlyCitizen::drawTerrainData()
 			Position point2 = chokepoint->getSides().second;
 			Broodwar->drawLineMap(point1, point2, Colors::Red);
 		}
+		Broodwar->drawCircleMap(region->getCenter(), 10, Colors::Purple);
 	}
 }

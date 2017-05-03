@@ -5,6 +5,17 @@
 
 using namespace BWAPI;
 
+//######################### REFACTOR #########################################
+std::vector<CostumUnit*> InformationManager::costumUnits;
+std::vector<ProductionBuilding*> InformationManager::productionBuildings;
+std::vector<TechBuilding*> InformationManager::techBuildings;
+std::vector<MilitaryBuilding*> InformationManager::militaryBuildings;
+std::vector<MilitaryUnit*> InformationManager::militaryUnits;
+std::vector<WorkerUnit*> InformationManager::workerUnits;
+
+//############################################################################
+
+
 Race InformationManager::ourRace;
 Unit InformationManager::firstCenter; //Swap out with better, generalized functionality later
 std::vector<Unit> InformationManager::firstWorkers; //Swap out with better, generalized functionality later
@@ -169,6 +180,79 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	}
 }
 
+void InformationManager::OnNewUnit2(Unit unit){//Should only be called by FriendlyCitizen.cpp. Stores data about new unit.
+	if (unit->getPlayer() == Broodwar->self()){
+		CostumUnit* temp = new CostumUnit();
+		temp->unit = unit;
+		bool found = false;
+		for (auto us : InformationManager::costumUnits){
+			if (us->unit == unit) found = true;
+		}
+		if (!found){
+			InformationManager::costumUnits.push_back(temp);
+			if (unit->getType().isBuilding()){
+				if (unit->canTrain()){
+					ProductionBuilding* temp = new ProductionBuilding();
+					temp->unit = unit;
+					InformationManager::productionBuildings.push_back(temp);
+				}
+				else if (unit->canAttack()){
+					MilitaryBuilding* temp = new MilitaryBuilding();
+					temp->unit = unit;
+					InformationManager::militaryBuildings.push_back(temp);
+				}
+				else {
+					TechBuilding* temp = new TechBuilding();
+					temp->unit = unit;
+					InformationManager::techBuildings.push_back(temp);
+				}
+			}
+			else{
+				if (unit->getType().isWorker()){
+					WorkerUnit* temp = new WorkerUnit();
+					temp->unit = unit;
+					temp->center = unit->getClosestUnit(Filter::IsResourceDepot);
+					temp->state = UnitState::FREE;
+					InformationManager::workerUnits.push_back(temp);
+				}
+				else{
+					MilitaryUnit* temp = new MilitaryUnit();
+					temp->unit = unit;
+					InformationManager::militaryUnits.push_back(temp);
+				}
+			}
+
+			InformationManager::ourUnitTypes.insert(unit->getType());
+			for (auto &ot : InformationManager::ourTech){
+				if (ot.selfType == unit->getType()){
+					ot.exists = true;
+				}
+			}
+		}
+	}
+	else if (unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
+
+		EnemyUnit enemy;
+		enemy.self = unit;
+		enemy.selfID = unit->getID();
+		enemy.selfType = unit->getType();
+		enemy.lastSeen = unit->getPosition();
+		bool newUnit = true;;
+		for (auto e : InformationManager::enemyUnits){
+			if (e.self->getID() == unit->getID()){
+				newUnit = false;
+			}
+		}
+		if (newUnit){
+			//Broodwar << "Enemy found!" << std::endl;
+			InformationManager::enemyUnits.push_back(enemy);
+		}
+	}
+	else {//Neutral units.
+		//Unimplemented
+	}
+}
+
 void InformationManager::OnNewUnit(Unit unit){//Should only be called by FriendlyCitizen.cpp. Stores data about new unit.
 	if (unit->getPlayer() == Broodwar->self()){
 		UnitStatus temp;
@@ -190,7 +274,7 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 		}
 	}
 	else if(unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
-		Broodwar << "Enemy found! \n";
+		
 		EnemyUnit enemy;
 		enemy.self = unit;
 		enemy.selfID = unit->getID();
@@ -203,6 +287,7 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 			}
 		}
 		if (newUnit){
+			//Broodwar << "Enemy found!" << std::endl;
 			InformationManager::enemyUnits.push_back(enemy);
 		}
 	}
@@ -211,6 +296,91 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 	}
 }
 
+
+void InformationManager::OnUnitDestroy2(Unit unit){
+	if (unit->getPlayer() == Broodwar->self()){
+		int i = 0;
+		int j = 0;
+		CostumType tempType;
+		for (auto u : InformationManager::costumUnits){
+			if (u->unit == unit){
+				tempType = u->type;
+				if (u->type == CostumType::PRODUCER){
+					for (auto p : InformationManager::productionBuildings){
+						if (p->unit == unit){
+							InformationManager::productionBuildings.erase(InformationManager::productionBuildings.begin() + j);
+						}
+						j++;
+					}
+				}
+				else if (u->type == CostumType::TECH){
+					for (auto p : InformationManager::techBuildings){
+						if (p->unit == unit){
+							InformationManager::techBuildings.erase(InformationManager::techBuildings.begin() + j);
+						}
+						j++;
+					}
+				}
+				else if (u->type == CostumType::DEFENDER){
+					for (auto p : InformationManager::militaryBuildings){
+						if (p->unit == unit){
+							InformationManager::militaryBuildings.erase(InformationManager::militaryBuildings.begin() + j);
+						}
+						j++;
+					}
+				}
+				else if (u->type == CostumType::WORKER){
+					for (auto p : InformationManager::workerUnits){
+						if (p->unit == unit){
+							InformationManager::workerUnits.erase(InformationManager::workerUnits.begin() + j);
+						}
+						j++;
+					}
+				}
+				else if (u->type == CostumType::ATTACKER){
+					for (auto p : InformationManager::militaryUnits){
+						if (p->unit == unit){
+							InformationManager::militaryUnits.erase(InformationManager::militaryUnits.begin() + j);
+						}
+						j++;
+					}
+				}
+
+				InformationManager::costumUnits.erase(InformationManager::costumUnits.begin()+i);
+				break;
+			}
+			i++;
+		}
+
+		bool hasStillType = false;
+		for (auto u : Broodwar->self()->getUnits()){
+			if (u->getType() == unit->getType()){
+				hasStillType = true;
+				break;
+			}
+		}
+		if (!hasStillType){
+			InformationManager::ourUnitTypes.erase(unit->getType());
+			for (auto ot : InformationManager::ourTech){
+				if (ot.selfType == unit->getType()){
+					ot.exists = false;
+				}
+			}
+		}
+	}
+	else if (unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
+		std::vector<EnemyUnit> tempVector;
+		for (auto e : InformationManager::enemyUnits){
+			if (e.selfID != unit->getID()){
+				tempVector.push_back(e);
+			}
+		}
+		InformationManager::enemyUnits = tempVector;
+	}
+	else {//Neutral units.
+		//Unimplemented
+	}
+}
 void InformationManager::OnUnitDestroy(Unit unit){
 	if (unit->getPlayer() == Broodwar->self()){
 		for (auto u : InformationManager::ourUnits){

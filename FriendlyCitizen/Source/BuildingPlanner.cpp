@@ -1,3 +1,4 @@
+#pragma once
 #include "BuildingPlanner.h"
 #include "InformationManager.h"
 #include <iostream>
