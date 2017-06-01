@@ -61,3 +61,17 @@ void Debug::screenInfo(){
 	Broodwar->drawTextScreen(520, 15, "%c%d", Text::Yellow, InformationManager::reservedGas);
 
 }
+
+void Debug::errorLogMessages(std::string input){
+	Debug::errorLog.push_back(input);
+}
+
+void Debug::endWriteLog(){
+	_mkdir("tests");
+	std::ofstream writeTo;
+	writeTo.open("tests\\ErrorLog.txt");
+	for (auto message : Debug::errorLog){
+		writeTo << message + "\n";
+	}
+	writeTo.close();
+}
