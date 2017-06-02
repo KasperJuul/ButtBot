@@ -55,6 +55,10 @@ void FriendlyCitizen::onStart()
 	//Broodwar->sendText("black sheep wall");
 	//Broodwar->sendText("operation cwal");
 	Broodwar->sendText("black sheep wall");
+	for (auto b : InformationManager::ourRace.getCenter().buildsWhat()){
+		Broodwar << b.toString() << std::endl;
+	}
+	
 
 }
 

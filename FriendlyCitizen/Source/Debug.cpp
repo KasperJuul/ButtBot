@@ -8,6 +8,8 @@
 
 using namespace BWAPI;
 
+std::vector<std::string> Debug::errorLog;
+
 void Debug::writeLog(std::string message, std::string fileName, std::string folderName){
 	_mkdir(folderName.c_str());
 	std::ofstream writeTo;

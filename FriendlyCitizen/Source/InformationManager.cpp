@@ -47,73 +47,8 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	reservedMinerals = 0;
 	reservedGas = 0;
 	InformationManager::ourRace = Broodwar->self()->getRace(); //Gets our current race
-	
-	UnitType::set totalSet = InformationManager::ourRace.getWorker().buildsWhat();//Tech tree code start
 
-	if (InformationManager::ourRace.c_str() == Races::Zerg.c_str()){
-		totalSet.insert(UnitTypes::Zerg_Larva);
-	}
-	bool newFound = true;
-	while (newFound){
-		bool temp = false;
-		int totalSetSizePrior = totalSet.size();
-		for (auto b : totalSet){
-			totalSet.insert(b.buildsWhat().begin(), b.buildsWhat().end());
-		}
-		if (totalSet.size() == totalSetSizePrior) newFound = false;
-	}
-	UnitType baseTech;
-	if (InformationManager::ourRace.c_str() != Races::Zerg.c_str()){
-		baseTech = InformationManager::ourRace.getCenter(); //Unfinished tech tree code
-	}
-	else {
-		baseTech = UnitTypes::Zerg_Larva;
-	}
-	//std::vector<TechNode> tempNodes;
-	for (auto t : totalSet){
-		TechNode tempNode;
-		tempNode.selfType = t;
-		if (t == InformationManager::ourRace.getCenter()){
-			tempNode.exists = true;
-		}
-		else if(t == UnitTypes::Zerg_Larva){
-			tempNode.exists = true;
-		}
-		else if (t == UnitTypes::Zerg_Overlord){
-			tempNode.exists = true;
-		}
-		else if (t == InformationManager::ourRace.getWorker()){
-			tempNode.exists = true;
-		}
-		else {
-			tempNode.exists = false;
-		}
-		InformationManager::ourTech.push_back(tempNode);
-	}
-
-	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){//For every node, we want to fill up the node's effect and precon vectors
-		for (auto u : InformationManager::ourTech.at(i).selfType.buildsWhat()){//For each object that the current node can build..
-			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
-				if (InformationManager::ourTech.at(i2).selfType == u){
-					InformationManager::ourTech.at(i).effect.push_back(&InformationManager::ourTech.at(i2));
-				}
-			}
-		}
-		for (auto u : InformationManager::ourTech.at(i).selfType.requiredUnits()){
-			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){
-				if (InformationManager::ourTech.at(i2).selfType == u.first){
-					InformationManager::ourTech.at(i).precondition.push_back(&InformationManager::ourTech.at(i2));
-				}
-			}
-		}
-		if (InformationManager::ourTech.at(i).selfType.producesLarva()){
-			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
-				if (InformationManager::ourTech.at(i2).selfType == UnitTypes::Zerg_Larva){
-					InformationManager::ourTech.at(i).effect.push_back(&InformationManager::ourTech.at(i2));
-				}
-			}
-		}
-	}
+	InformationManager::makeTechGraph();
 
 	for (auto &u : Broodwar->self()->getUnits()){//Early functionality to quickly get vital data for other sections of the code
 		if (InformationManager::ourRace.getCenter() == u->getType()){
@@ -159,9 +94,6 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 		Debug::writeLog(temp.c_str(), InformationManager::ourTech.at(i).selfType.getName().c_str(), InformationManager::ourRace.getName().c_str());
 	}
 
-	//InformationManager::ourTech = tempNodes;
-
-
 	//Adding units to our manual structs.
 	for (auto u : Broodwar->self()->getUnits()){
 		UnitStatus temp;
@@ -177,6 +109,71 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	for (auto &b : BWTA::getBaseLocations()){
 		if (b == mainBase){ continue;}
 		baseLocations.push_back(b);
+	}
+}
+
+void InformationManager::makeTechGraph(){
+	//Inital set of what a worker can build
+	std::set<UnitType> initialSet;
+	initialSet.insert(InformationManager::ourRace.getWorker());
+
+	if (InformationManager::ourRace.c_str() == Races::Zerg.c_str()){
+		initialSet.insert(UnitTypes::Zerg_Larva);
+	}
+
+	bool newElementAdded = true;
+	while (newElementAdded){
+		int PriorSetSize = initialSet.size();
+		for (auto b : initialSet){
+			initialSet.insert(b.buildsWhat().begin(), b.buildsWhat().end());
+		}
+		if (initialSet.size() == PriorSetSize) newElementAdded = false;
+	}
+
+	for (auto t : initialSet){
+		TechNode tempNode;
+		tempNode.selfType = t;
+		if (t == InformationManager::ourRace.getCenter()){
+			tempNode.exists = true;
+		}
+		else if (t == UnitTypes::Zerg_Larva){
+			tempNode.exists = true;
+		}
+		else if (t == UnitTypes::Zerg_Overlord){
+			tempNode.exists = true;
+		}
+		else if (t == InformationManager::ourRace.getWorker()){
+			tempNode.exists = true;
+		}
+		else {
+			tempNode.exists = false;
+		}
+		InformationManager::ourTech.push_back(tempNode);
+	}
+
+	//For every node, we want to fill up the node's effect and precon vectors
+	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
+		for (auto u : InformationManager::ourTech.at(i).selfType.buildsWhat()){//For each object that the current node can build..
+			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
+				if (InformationManager::ourTech.at(i2).selfType == u){
+					InformationManager::ourTech.at(i).effect.push_back(&InformationManager::ourTech.at(i2));
+				}
+			}
+		}
+		for (auto u : InformationManager::ourTech.at(i).selfType.requiredUnits()){
+			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){
+				if (InformationManager::ourTech.at(i2).selfType == u.first){
+					InformationManager::ourTech.at(i).precondition.push_back(&InformationManager::ourTech.at(i2));
+				}
+			}
+		}
+		if (InformationManager::ourTech.at(i).selfType.producesLarva()){
+			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
+				if (InformationManager::ourTech.at(i2).selfType == UnitTypes::Zerg_Larva){
+					InformationManager::ourTech.at(i).effect.push_back(&InformationManager::ourTech.at(i2));
+				}
+			}
+		}
 	}
 }
 

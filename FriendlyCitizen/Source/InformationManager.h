@@ -82,6 +82,7 @@ public:
 	static std::vector<TechNode> ourTech;
 	static Race theirRace;
 	static std::vector<TechNode> theirTech;
+	static void makeTechGraph();
 
 	//Information - Dynamic
 	static int reservedMinerals;
