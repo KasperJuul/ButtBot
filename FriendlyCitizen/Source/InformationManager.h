@@ -97,7 +97,7 @@ public:
 	static std::vector<TechNode> theirTech;
 	static void makeTechGraph();
 	static std::vector<Upgrade*> upgradeList; //Keeps track of our upgrades. NOTE: No built-in way to keep track up upgrades nor abilities being finished.
-	static std::set<Ability*> abilityList; //Keeps track of our abilities. NOTE Cont.: Manual solution should be made.
+	static std::vector<Ability*> abilityList; //Keeps track of our abilities. NOTE Cont.: Manual solution should be made.
 
 	//Information - Dynamic
 	static int reservedMinerals;

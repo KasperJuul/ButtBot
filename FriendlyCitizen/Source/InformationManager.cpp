@@ -37,7 +37,7 @@ std::vector<BWTA::BaseLocation*> InformationManager::baseLocations;
 std::set<UnitStatus> InformationManager::ourUnits; //Catalogues the units we have
 std::set<UnitType> InformationManager::ourUnitTypes; //Catalogues the unittypes we have
 std::vector<Upgrade*> InformationManager::upgradeList; 
-std::set<Ability*> InformationManager::abilityList;
+std::vector<Ability*> InformationManager::abilityList;
 
 
 //Basic bwapi function implementations
@@ -157,7 +157,7 @@ void InformationManager::makeTechGraph(){
 			if (exists){
 				continue;
 			}
-			InformationManager::abilityList.insert(temp);
+			InformationManager::abilityList.push_back(temp);
 		}
 		for (auto &t : u.selfType.abilities()){
 			Ability* temp = new Ability;
@@ -174,7 +174,7 @@ void InformationManager::makeTechGraph(){
 			if (exists){
 				continue;
 			}
-			InformationManager::abilityList.insert(temp);
+			InformationManager::abilityList.push_back(temp);
 		}
 	}
 
