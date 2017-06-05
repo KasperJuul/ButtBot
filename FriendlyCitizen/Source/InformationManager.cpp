@@ -36,7 +36,11 @@ std::vector<TechNode> InformationManager::theirTech;
 std::vector<BWTA::BaseLocation*> InformationManager::baseLocations;
 std::set<UnitStatus> InformationManager::ourUnits; //Catalogues the units we have
 std::set<UnitType> InformationManager::ourUnitTypes; //Catalogues the unittypes we have
+std::vector<Upgrade*> InformationManager::upgradeList; 
+std::set<Ability*> InformationManager::abilityList;
 
+
+//Basic bwapi function implementations
 void InformationManager::StartAnalysis(){//Initializes informationmanager
 	//Initialization - Algorithmic bools
 	InformationManager::enemyFound = false;
@@ -61,37 +65,6 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 		else if (InformationManager::ourRace.getWorker() == u->getType()){
 			InformationManager::firstWorkers.push_back(u);
 		}
-	}
-
-	//debug-init
-	std::string testAbove = InformationManager::firstCenter->getType().getName();//Tests if the above works. Manual test: See that the printed name equates the base type
-	Broodwar->sendText(testAbove.c_str());
-
-	std::string testTech = InformationManager::ourTech.at(0).selfType.toString();
-	std::string testTech2;
-	Broodwar->sendText(testTech.c_str());
-	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
-		if (InformationManager::ourTech.at(i).selfType == InformationManager::ourRace.getWorker()){
-			testTech = InformationManager::ourTech.at(i).effect.at(6)->selfType.toString();
-			testTech2 = InformationManager::ourTech.at(i).precondition.at(0)->selfType.toString();
-		}
-	}
-	Broodwar->sendText(testTech.c_str());//Should write out the name of something a worker can build
-	Broodwar->sendText(testTech2.c_str());//Should write out the command-center or larva if zerg
-
-	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
-		std::string temp = "This unit builds:\n";
-		for (unsigned int i2 = 0; i2 < InformationManager::ourTech.at(i).effect.size(); i2++){
-			temp += InformationManager::ourTech.at(i).effect.at(i2)->selfType.c_str();
-			temp += "\n";
-		}
-		temp += "\nThis unit requires:\n";
-		for (unsigned int i2 = 0; i2 < InformationManager::ourTech.at(i).precondition.size(); i2++){
-			temp += InformationManager::ourTech.at(i).precondition.at(i2)->selfType.c_str();
-			temp += "\n";
-		}
-		temp += "\nThis unit exists: " + std::to_string(InformationManager::ourTech.at(i).exists);
-		Debug::writeLog(temp.c_str(), InformationManager::ourTech.at(i).selfType.getName().c_str(), InformationManager::ourRace.getName().c_str());
 	}
 
 	//Adding units to our manual structs.
@@ -151,6 +124,62 @@ void InformationManager::makeTechGraph(){
 		InformationManager::ourTech.push_back(tempNode);
 	}
 
+	//Vectors containing technologies and abilities.
+	for (auto u : ourTech){
+		for (auto &t : u.selfType.upgradesWhat()){
+			Upgrade* temp = new Upgrade;
+			temp->selfType = t;
+			bool exists = false;
+			for (auto t2 : InformationManager::upgradeList){
+				if (t2->selfType.getName() == temp->selfType.getName()){
+					exists = true;
+				}
+			}
+			if (exists){
+				continue;
+			}
+			InformationManager::upgradeList.push_back(temp);
+		}
+	}
+	for (auto u : ourTech){
+		for (auto &t : u.selfType.researchesWhat()){
+			Ability* temp = new Ability;
+			temp->selfType = t;
+			if (t.requiredUnit() == BWAPI::TechTypes::None){
+				temp->researched = true;
+			}
+			bool exists = false;
+			for (auto t2 : InformationManager::abilityList){
+				if (t2->selfType.getName() == temp->selfType.getName()){
+					exists = true;
+				}
+			}
+			if (exists){
+				continue;
+			}
+			InformationManager::abilityList.insert(temp);
+		}
+		for (auto &t : u.selfType.abilities()){
+			Ability* temp = new Ability;
+			temp->selfType = t;
+			if (t.requiredUnit() == BWAPI::TechTypes::None){
+				temp->researched = true;
+			}
+			bool exists = false;
+			for (auto t2 : InformationManager::abilityList){
+				if (t2->selfType.getName() == temp->selfType.getName()){
+					exists = true;
+				}
+			}
+			if (exists){
+				continue;
+			}
+			InformationManager::abilityList.insert(temp);
+		}
+	}
+
+	
+	//Connect the building/unit tech graph.
 	//For every node, we want to fill up the node's effect and precon vectors
 	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
 		for (auto u : InformationManager::ourTech.at(i).selfType.buildsWhat()){//For each object that the current node can build..
@@ -177,7 +206,7 @@ void InformationManager::makeTechGraph(){
 	}
 }
 
-void InformationManager::OnNewUnit2(Unit unit){//Should only be called by FriendlyCitizen.cpp. Stores data about new unit.
+void InformationManager::OnNewUnit(Unit unit){//Should only be called by FriendlyCitizen.cpp. Stores data about new unit.
 	if (unit->getPlayer() == Broodwar->self()){
 		CostumUnit* temp = new CostumUnit();
 		temp->unit = unit;
@@ -246,55 +275,11 @@ void InformationManager::OnNewUnit2(Unit unit){//Should only be called by Friend
 		}
 	}
 	else {//Neutral units.
-		//Unimplemented
+		//Nothing happens.
 	}
 }
 
-void InformationManager::OnNewUnit(Unit unit){//Should only be called by FriendlyCitizen.cpp. Stores data about new unit.
-	if (unit->getPlayer() == Broodwar->self()){
-		UnitStatus temp;
-		temp.owner = OwnerProcess::FREE;
-		temp.self = unit;
-		temp.state = UnitState::FREE;
-		bool found = false;
-		for (auto us : InformationManager::ourUnits){
-			if (us.self == unit) found = true;
-		}
-		if (!found){
-			InformationManager::ourUnits.insert(temp);
-			InformationManager::ourUnitTypes.insert(unit->getType());
-			for (auto &ot : InformationManager::ourTech){
-				if (ot.selfType == unit->getType()){
-					ot.exists = true;
-				}
-			}
-		}
-	}
-	else if(unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
-		
-		EnemyUnit enemy;
-		enemy.self = unit;
-		enemy.selfID = unit->getID();
-		enemy.selfType = unit->getType();
-		enemy.lastSeen = unit->getPosition();
-		bool newUnit = true;;
-		for (auto e : InformationManager::enemyUnits){
-			if (e.self->getID() == unit->getID()){
-				newUnit = false;
-			}
-		}
-		if (newUnit){
-			//Broodwar << "Enemy found!" << std::endl;
-			InformationManager::enemyUnits.push_back(enemy);
-		}
-	}
-	else {//Neutral units.
-		//Unimplemented
-	}
-}
-
-
-void InformationManager::OnUnitDestroy2(Unit unit){
+void InformationManager::OnUnitDestroy(Unit unit){
 	if (unit->getPlayer() == Broodwar->self()){
 		int i = 0;
 		int j = 0;
@@ -375,46 +360,10 @@ void InformationManager::OnUnitDestroy2(Unit unit){
 		InformationManager::enemyUnits = tempVector;
 	}
 	else {//Neutral units.
-		//Unimplemented
+		//Nothing happens.
 	}
 }
-void InformationManager::OnUnitDestroy(Unit unit){
-	if (unit->getPlayer() == Broodwar->self()){
-		for (auto u : InformationManager::ourUnits){
-			if (u.self == unit){
-				InformationManager::ourUnits.erase(u);
-				break;
-			}
-		}
-		bool hasStillType = false;
-		for (auto u : Broodwar->self()->getUnits()){
-			if (u->getType() == unit->getType()){
-				hasStillType = true;
-				break;
-			}
-		}
-		if (!hasStillType){
-			InformationManager::ourUnitTypes.erase(unit->getType());
-			for (auto ot : InformationManager::ourTech){
-				if (ot.selfType == unit->getType()){
-					ot.exists = false;
-				}
-			}
-		}
-	}
-	else if (unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
-		std::vector<EnemyUnit> tempVector;
-		for (auto e : InformationManager::enemyUnits){
-			if (e.selfID != unit->getID()){
-				tempVector.push_back(e);
-			}
-		}
-		InformationManager::enemyUnits = tempVector;
-	}
-	else {//Neutral units.
-		//Unimplemented
-	}
-}
+
 
 void InformationManager::AssignUnit(UnitStatus unit, UnitState state, OwnerProcess process){
 	unit.state = state;
