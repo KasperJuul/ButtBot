@@ -8,6 +8,7 @@
 
 using namespace BWAPI;
 
+std::vector<std::string> Debug::errorLog;
 void Debug::writeLog(std::string message, std::string fileName, std::string folderName){
 	_mkdir(folderName.c_str());
 	std::ofstream writeTo;
@@ -16,7 +17,23 @@ void Debug::writeLog(std::string message, std::string fileName, std::string fold
 	writeTo.close();
 }
 
-void Debug::writeTimedLog(std::string message, std::string fileName, std::string folderName){//UNTESTED.
+void Debug::writeLog(std::vector<std::string> messages, std::string fileName, std::string folderName){//Overload for vectors
+	std::string temp = "";
+	for (auto sentence : messages){
+		temp += sentence + "\n";
+	}
+	writeLog(temp, fileName, folderName);
+}
+
+void Debug::writeLog(std::set<std::string> messages, std::string fileName, std::string folderName){//Overload for sets
+	std::string temp = "";
+	for (auto sentence : messages){
+		temp += sentence + "\n";
+	}
+	writeLog(temp, fileName, folderName);
+}//Improvement: Find a way to iterate over any type of collection.
+
+void Debug::writeTimedLog(std::string message, std::string fileName, std::string folderName){//BUGGY - crashes starcraft.
 	_mkdir(folderName.c_str());
 	time_t rawTime;
 	struct tm * timeInfo;
@@ -25,12 +42,12 @@ void Debug::writeTimedLog(std::string message, std::string fileName, std::string
 	std::ofstream writeTo;
 	char buffer[26];
 	asctime_s(buffer, sizeof buffer, timeInfo);
-	writeTo.open(folderName + "\\" + buffer + "; " + fileName + ".txt");
+	writeTo.open(folderName + "\\" + buffer + "_" + fileName + ".txt");
 	writeTo << message + "\n";
 	writeTo.close();
 }
 
-void Debug::screenInfo(){
+void Debug::screenInfo(){//More complex debugging can be done here in the future.
 	for (auto &u : Broodwar->self()->getUnits()){
 		if (u->getType().isWorker()){
 			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::Blue, u->getID());
@@ -60,4 +77,20 @@ void Debug::screenInfo(){
 	Broodwar->drawTextScreen(452, 15, "%c%d", Text::Yellow, InformationManager::reservedMinerals);
 	Broodwar->drawTextScreen(520, 15, "%c%d", Text::Yellow, InformationManager::reservedGas);
 
+}
+
+void Debug::errorLogMessages(std::string input){
+	std::string temp = "Frame count: " + std::to_string(Broodwar->getFrameCount());
+	temp += " Msg: " + input;
+	Debug::errorLog.push_back(temp);
+}
+
+void Debug::endWriteLog(){
+	_mkdir("tests");
+	std::ofstream writeTo;
+	writeTo.open("tests\\ErrorLog.txt");
+	for (auto message : Debug::errorLog){
+		writeTo << message + "\n";
+	}
+	writeTo.close();
 }

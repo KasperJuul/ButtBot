@@ -1,3 +1,4 @@
+#pragma once
 #include "FriendlyCitizen.h"
 #include <BWTA.h>
 #include <iostream>
@@ -53,7 +54,10 @@ void FriendlyCitizen::onStart()
 
 	//Broodwar->sendText("black sheep wall");
 	//Broodwar->sendText("operation cwal");
-	//Broodwar->sendText("black sheep wall");
+	Broodwar->sendText("black sheep wall");
+	for (auto b : InformationManager::ourRace.getCenter().buildsWhat()){
+		Broodwar << b.toString() << std::endl;
+	}
 
 }
 
@@ -75,11 +79,36 @@ void FriendlyCitizen::onEnd(bool isWinner)
 	}
 	Debug::writeLog(ResourceManager::log, "QueueLog", "Logs");
 	Debug::writeLog(FriendlyCitizen::minelog, "minLog", "Logs");
+
+	std::string temp2 = "Upgrades:\n";
+	for (auto t : InformationManager::upgradeList){
+		temp2 += t->selfType.getName() + "\n";
+	}
+
+	temp2 += "\nAbilities:\n";
+
+	for (auto t : InformationManager::abilityList){
+		temp2 += t->selfType.getName() + "\n";
+	}
+
+	Debug::writeLog(temp2, "technologies", "Logs");
 	// Called when the game ends
 	if (isWinner)
 	{
 		// Log your win here!
 	}
+	
+	BuildingPlanner::makePlanN();
+	std::vector<Priority> toTest = BuildingPlanner::findOrder();
+
+	std::vector<std::string> testToString;
+	for (auto p : toTest){
+		testToString.push_back(std::to_string(p.priority) + " " + p.unitType.getName());
+	}
+	Debug::writeLog(testToString,"newheuristics","test");
+
+	Debug::errorLogMessages("End Of Match");
+	Debug::endWriteLog();//New testing system!
 }
 
 void FriendlyCitizen::onFrame()
@@ -117,6 +146,7 @@ void FriendlyCitizen::onFrame()
 	if (Broodwar->getFrameCount() % Broodwar->getLatencyFrames() != 0)
 		return;
 	
+
 	//Onframe functionality.
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
@@ -187,7 +217,7 @@ void FriendlyCitizen::onNukeDetect(BWAPI::Position target)//Infomanager low prio
 
 void FriendlyCitizen::onUnitDiscover(BWAPI::Unit unit)
 {
-	InformationManager::OnNewUnit(unit);
+	//InformationManager::OnNewUnit2(unit);
 }
 
 void FriendlyCitizen::onUnitEvade(BWAPI::Unit unit)
@@ -204,20 +234,6 @@ void FriendlyCitizen::onUnitHide(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 {
-	if (unit->getPlayer() == Broodwar->self()){
-		if (unit->getType().isBuilding()){
-			int itr = 0;
-			for (auto &b : InformationManager::orderedBuildings){
-				if (b == unit->getType()){
-					InformationManager::orderedBuildings.erase(InformationManager::orderedBuildings.begin() + itr);
-					break;
-				}
-				itr++;
-			}
-			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
-			InformationManager::reservedGas -= unit->getType().gasPrice();
-		}
-	}
 
 	//InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
@@ -286,7 +302,20 @@ void FriendlyCitizen::onSaveGame(std::string gameName)
 
 void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 {
-
+	if (unit->getPlayer() == Broodwar->self()){
+		if (unit->getType().isBuilding()){
+			int itr = 0;
+			for (auto &b : InformationManager::orderedBuildings){
+				if (b == unit->getType()){
+					InformationManager::orderedBuildings.erase(InformationManager::orderedBuildings.begin() + itr);
+					break;
+				}
+				itr++;
+			}
+			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
+			InformationManager::reservedGas -= unit->getType().gasPrice();
+		}
+	}
 	InformationManager::OnNewUnit(unit);
 	if (unit->getPlayer() == Broodwar->self()){
 		if (unit->getType().isResourceDepot()){
@@ -302,18 +331,6 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 				InformationManager::centers.push_back(temp);
 			}
 			BuildingPlacer::xpandIsBeingBuild = false;
-		}
-		if (unit->getType().isWorker()){
-			workerUnit temp;
-			temp.unit = unit;
-			temp.status = "Idle";
-			Unit center = unit->getClosestUnit(IsResourceDepot);
-			for (auto &c : InformationManager::centers){
-				if (c.unit == center){
-					c.wrkUnits.push_back(temp);
-				}
-			}
-			//InformationManager::wrkUnits.push_back(temp);
 		}
 
 		if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
@@ -377,5 +394,6 @@ void FriendlyCitizen::drawTerrainData()
 			Position point2 = chokepoint->getSides().second;
 			Broodwar->drawLineMap(point1, point2, Colors::Red);
 		}
+		Broodwar->drawCircleMap(region->getCenter(), 10, Colors::Purple);
 	}
 }

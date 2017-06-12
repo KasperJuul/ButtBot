@@ -6,9 +6,17 @@
 #include "UnitState.h"
 #include "OwnerProcess.h"
 #include "ResourceManager.h"
+#include "CostumUnit.h"
 #include <set>
 
 using namespace BWAPI;
+
+
+
+// ################### REFACTOR #########################
+
+//######################################################################################################
+
 
 struct EnemyUnit{
 	Unit self;//This unit (pointer)
@@ -17,11 +25,25 @@ struct EnemyUnit{
 	int selfID;
 };
 
+struct Upgrade{//TODO: Manually keep track of upgrade's effect using a dedicated class for said information. *Sigh*
+	int level = 0;
+	//std::string selfType = "";
+	BWAPI::UpgradeType selfType = BWAPI::UpgradeTypes::None;
+};
+
+struct Ability{
+	bool researched = false;
+	BWAPI::TechType selfType = BWAPI::TechTypes::None;
+
+};
+
 struct TechNode{
 	std::vector<TechNode *> precondition; //Points back to nodes that are required for this unit to be build.
 	UnitType selfType; //This unit.
 	bool exists = false;
 	//int nodeCost = INT_MAX; //How many resources will this cost?
+	//Technology* technologyPrecondition = NULL;
+	//std::vector<Technology*> technologyEffect; //Pointless, seeing that only one unit in the entire game holds this prequisite, ands ince type already holds techEffect values.
 	std::vector<TechNode *> effect; //Points to nodes that can be built by this node.
 };
 
@@ -74,6 +96,9 @@ public:
 	static std::vector<TechNode> ourTech;
 	static Race theirRace;
 	static std::vector<TechNode> theirTech;
+	static void makeTechGraph();
+	static std::vector<Upgrade*> upgradeList; //Keeps track of our upgrades. NOTE: No built-in way to keep track up upgrades nor abilities being finished.
+	static std::vector<Ability*> abilityList; //Keeps track of our abilities. NOTE Cont.: Manual solution should be made.
 
 	//Information - Dynamic
 	static int reservedMinerals;
@@ -90,4 +115,16 @@ public:
 	static std::vector<workerUnit> wrkUnits;
 	static std::vector<Center> centers; 
 	static std::vector<UnitType> orderedBuildings;
+
+	//######################### REFACTOR #########################################
+	//Information storage functions
+
+	static std::vector<CostumUnit*> costumUnits;
+	static std::vector<ProductionBuilding*> productionBuildings;
+	static std::vector<TechBuilding*> techBuildings;
+	static std::vector<MilitaryBuilding*> militaryBuildings;
+	static std::vector<MilitaryUnit*> militaryUnits;
+	static std::vector<WorkerUnit*> workerUnits;
+
+	//############################################################################
 };

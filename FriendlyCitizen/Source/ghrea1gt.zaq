@@ -44,9 +44,9 @@ void ResourceManager::findMinPatches(){
 
 void ResourceManager::stdGather(){
 	for (auto w : InformationManager::workerUnits){
-		if (!w->unit->isConstructing() && !w->unit->isGatheringMinerals()){
+		if (w->state == UnitState::FREE){
 			w->unit->gather(w->unit->getClosestUnit(IsMineralField || IsRefinery));
-			//w->state = UnitState::WORKING;
+			w->state = UnitState::WORKING;
 		}
 	}
 

@@ -5,6 +5,17 @@
 
 using namespace BWAPI;
 
+//######################### REFACTOR #########################################
+std::vector<CostumUnit*> InformationManager::costumUnits;
+std::vector<ProductionBuilding*> InformationManager::productionBuildings;
+std::vector<TechBuilding*> InformationManager::techBuildings;
+std::vector<MilitaryBuilding*> InformationManager::militaryBuildings;
+std::vector<MilitaryUnit*> InformationManager::militaryUnits;
+std::vector<WorkerUnit*> InformationManager::workerUnits;
+
+//############################################################################
+
+
 Race InformationManager::ourRace;
 Unit InformationManager::firstCenter; //Swap out with better, generalized functionality later
 std::vector<Unit> InformationManager::firstWorkers; //Swap out with better, generalized functionality later
@@ -25,7 +36,11 @@ std::vector<TechNode> InformationManager::theirTech;
 std::vector<BWTA::BaseLocation*> InformationManager::baseLocations;
 std::set<UnitStatus> InformationManager::ourUnits; //Catalogues the units we have
 std::set<UnitType> InformationManager::ourUnitTypes; //Catalogues the unittypes we have
+std::vector<Upgrade*> InformationManager::upgradeList; 
+std::vector<Ability*> InformationManager::abilityList;
 
+
+//Basic bwapi function implementations
 void InformationManager::StartAnalysis(){//Initializes informationmanager
 	//Initialization - Algorithmic bools
 	InformationManager::enemyFound = false;
@@ -36,36 +51,65 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	reservedMinerals = 0;
 	reservedGas = 0;
 	InformationManager::ourRace = Broodwar->self()->getRace(); //Gets our current race
-	
-	UnitType::set totalSet = InformationManager::ourRace.getWorker().buildsWhat();//Tech tree code start
+
+	InformationManager::makeTechGraph();
+
+	for (auto &u : Broodwar->self()->getUnits()){//Early functionality to quickly get vital data for other sections of the code
+		if (InformationManager::ourRace.getCenter() == u->getType()){
+			InformationManager::firstCenter = u;
+			Center temp;
+			temp.unit = u;
+			temp.wrkUnits.clear();
+			centers.push_back(temp);
+		}
+		else if (InformationManager::ourRace.getWorker() == u->getType()){
+			InformationManager::firstWorkers.push_back(u);
+		}
+	}
+
+	//Adding units to our manual structs.
+	for (auto u : Broodwar->self()->getUnits()){
+		UnitStatus temp;
+		temp.owner = OwnerProcess::FREE;
+		temp.self = u;
+		temp.state = UnitState::FREE;
+		InformationManager::ourUnits.insert(temp);
+		InformationManager::ourUnitTypes.insert(u->getType());
+	}
+
+	//Getting the baselocations
+	mainBase = BWTA::getStartLocation(Broodwar->self());
+	for (auto &b : BWTA::getBaseLocations()){
+		if (b == mainBase){ continue;}
+		baseLocations.push_back(b);
+	}
+}
+
+void InformationManager::makeTechGraph(){
+	//Inital set of what a worker can build
+	std::set<UnitType> initialSet;
+	initialSet.insert(InformationManager::ourRace.getWorker());
 
 	if (InformationManager::ourRace.c_str() == Races::Zerg.c_str()){
-		totalSet.insert(UnitTypes::Zerg_Larva);
+		initialSet.insert(UnitTypes::Zerg_Larva);
 	}
-	bool newFound = true;
-	while (newFound){
-		bool temp = false;
-		int totalSetSizePrior = totalSet.size();
-		for (auto b : totalSet){
-			totalSet.insert(b.buildsWhat().begin(), b.buildsWhat().end());
+
+	bool newElementAdded = true;
+	while (newElementAdded){
+		int PriorSetSize = initialSet.size();
+		for (auto b : initialSet){
+			initialSet.insert(b.buildsWhat().begin(), b.buildsWhat().end());
 		}
-		if (totalSet.size() == totalSetSizePrior) newFound = false;
+		if (initialSet.size() == PriorSetSize) newElementAdded = false;
 	}
-	UnitType baseTech;
-	if (InformationManager::ourRace.c_str() != Races::Zerg.c_str()){
-		baseTech = InformationManager::ourRace.getCenter(); //Unfinished tech tree code
-	}
-	else {
-		baseTech = UnitTypes::Zerg_Larva;
-	}
-	//std::vector<TechNode> tempNodes;
-	for (auto t : totalSet){
+
+	for (auto t : initialSet){
 		TechNode tempNode;
 		tempNode.selfType = t;
 		if (t == InformationManager::ourRace.getCenter()){
 			tempNode.exists = true;
 		}
-		else if(t == UnitTypes::Zerg_Larva){
+		else if (t == UnitTypes::Zerg_Larva){
 			tempNode.exists = true;
 		}
 		else if (t == UnitTypes::Zerg_Overlord){
@@ -80,7 +124,64 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 		InformationManager::ourTech.push_back(tempNode);
 	}
 
-	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){//For every node, we want to fill up the node's effect and precon vectors
+	//Vectors containing technologies and abilities.
+	for (auto u : ourTech){
+		for (auto &t : u.selfType.upgradesWhat()){
+			Upgrade* temp = new Upgrade;
+			temp->selfType = t;
+			bool exists = false;
+			for (auto t2 : InformationManager::upgradeList){
+				if (t2->selfType.getName() == temp->selfType.getName()){
+					exists = true;
+				}
+			}
+			if (exists){
+				continue;
+			}
+			InformationManager::upgradeList.push_back(temp);
+		}
+	}
+	for (auto u : ourTech){
+		for (auto &t : u.selfType.researchesWhat()){
+			Ability* temp = new Ability;
+			temp->selfType = t;
+			if (t.requiredUnit() == BWAPI::TechTypes::None){
+				temp->researched = true;
+			}
+			bool exists = false;
+			for (auto t2 : InformationManager::abilityList){
+				if (t2->selfType.getName() == temp->selfType.getName()){
+					exists = true;
+				}
+			}
+			if (exists){
+				continue;
+			}
+			InformationManager::abilityList.push_back(temp);
+		}
+		for (auto &t : u.selfType.abilities()){
+			Ability* temp = new Ability;
+			temp->selfType = t;
+			if (t.requiredUnit() == BWAPI::TechTypes::None){
+				temp->researched = true;
+			}
+			bool exists = false;
+			for (auto t2 : InformationManager::abilityList){
+				if (t2->selfType.getName() == temp->selfType.getName()){
+					exists = true;
+				}
+			}
+			if (exists){
+				continue;
+			}
+			InformationManager::abilityList.push_back(temp);
+		}
+	}
+
+	
+	//Connect the building/unit tech graph.
+	//For every node, we want to fill up the node's effect and precon vectors
+	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
 		for (auto u : InformationManager::ourTech.at(i).selfType.buildsWhat()){//For each object that the current node can build..
 			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
 				if (InformationManager::ourTech.at(i2).selfType == u){
@@ -103,84 +204,50 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 			}
 		}
 	}
-
-	for (auto &u : Broodwar->self()->getUnits()){//Early functionality to quickly get vital data for other sections of the code
-		if (InformationManager::ourRace.getCenter() == u->getType()){
-			InformationManager::firstCenter = u;
-			Center temp;
-			temp.unit = u;
-			temp.wrkUnits.clear();
-			centers.push_back(temp);
-		}
-		else if (InformationManager::ourRace.getWorker() == u->getType()){
-			InformationManager::firstWorkers.push_back(u);
-		}
-	}
-
-	//debug-init
-	std::string testAbove = InformationManager::firstCenter->getType().getName();//Tests if the above works. Manual test: See that the printed name equates the base type
-	Broodwar->sendText(testAbove.c_str());
-
-	std::string testTech = InformationManager::ourTech.at(0).selfType.toString();
-	std::string testTech2;
-	Broodwar->sendText(testTech.c_str());
-	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
-		if (InformationManager::ourTech.at(i).selfType == InformationManager::ourRace.getWorker()){
-			testTech = InformationManager::ourTech.at(i).effect.at(6)->selfType.toString();
-			testTech2 = InformationManager::ourTech.at(i).precondition.at(0)->selfType.toString();
-		}
-	}
-	Broodwar->sendText(testTech.c_str());//Should write out the name of something a worker can build
-	Broodwar->sendText(testTech2.c_str());//Should write out the command-center or larva if zerg
-
-	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
-		std::string temp = "This unit builds:\n";
-		for (unsigned int i2 = 0; i2 < InformationManager::ourTech.at(i).effect.size(); i2++){
-			temp += InformationManager::ourTech.at(i).effect.at(i2)->selfType.c_str();
-			temp += "\n";
-		}
-		temp += "\nThis unit requires:\n";
-		for (unsigned int i2 = 0; i2 < InformationManager::ourTech.at(i).precondition.size(); i2++){
-			temp += InformationManager::ourTech.at(i).precondition.at(i2)->selfType.c_str();
-			temp += "\n";
-		}
-		temp += "\nThis unit exists: " + std::to_string(InformationManager::ourTech.at(i).exists);
-		Debug::writeLog(temp.c_str(), InformationManager::ourTech.at(i).selfType.getName().c_str(), InformationManager::ourRace.getName().c_str());
-	}
-
-	//InformationManager::ourTech = tempNodes;
-
-
-	//Adding units to our manual structs.
-	for (auto u : Broodwar->self()->getUnits()){
-		UnitStatus temp;
-		temp.owner = OwnerProcess::FREE;
-		temp.self = u;
-		temp.state = UnitState::FREE;
-		InformationManager::ourUnits.insert(temp);
-		InformationManager::ourUnitTypes.insert(u->getType());
-	}
-
-	//Getting the baselocations
-	mainBase = BWTA::getStartLocation(Broodwar->self());
-	for (auto &b : BWTA::getBaseLocations()){
-		if (b == mainBase){ continue;}
-		baseLocations.push_back(b);
-	}
 }
 
 void InformationManager::OnNewUnit(Unit unit){//Should only be called by FriendlyCitizen.cpp. Stores data about new unit.
 	if (unit->getPlayer() == Broodwar->self()){
-		UnitStatus temp;
-		temp.owner = OwnerProcess::FREE;
-		temp.self = unit;
-		temp.state = UnitState::FREE;
+		CostumUnit* temp = new CostumUnit();
+		temp->unit = unit;
 		bool found = false;
-		for (auto us : InformationManager::ourUnits){
-			if (us.self == unit) found = true;
+		for (auto us : InformationManager::costumUnits){
+			if (us->unit == unit) found = true;
 		}
 		if (!found){
-			InformationManager::ourUnits.insert(temp);
+			InformationManager::costumUnits.push_back(temp);
+			if (unit->getType().isBuilding()){
+				if (unit->canTrain()){//Note: Nexus gets put here.
+					ProductionBuilding* temp = new ProductionBuilding();
+					temp->unit = unit;
+					InformationManager::productionBuildings.push_back(temp);
+				}
+				else if (unit->canAttack()){
+					MilitaryBuilding* temp = new MilitaryBuilding();
+					temp->unit = unit;
+					InformationManager::militaryBuildings.push_back(temp);
+				}
+				else {
+					TechBuilding* temp = new TechBuilding();
+					temp->unit = unit;
+					InformationManager::techBuildings.push_back(temp);
+				}
+			}
+			else{
+				if (unit->getType().isWorker()){//Workers!
+					WorkerUnit* temp = new WorkerUnit();
+					temp->unit = unit;
+					temp->center = unit->getClosestUnit(Filter::IsResourceDepot);
+					temp->state = UnitState::FREE;
+					InformationManager::workerUnits.push_back(temp);
+				}
+				else{//Support and extractor gets put here for some reason.
+					MilitaryUnit* temp = new MilitaryUnit();
+					temp->unit = unit;
+					InformationManager::militaryUnits.push_back(temp);
+				}
+			}
+
 			InformationManager::ourUnitTypes.insert(unit->getType());
 			for (auto &ot : InformationManager::ourTech){
 				if (ot.selfType == unit->getType()){
@@ -189,8 +256,8 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 			}
 		}
 	}
-	else if(unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
-		Broodwar << "Enemy found! \n";
+	else if (unit->getPlayer() == Broodwar->enemy()){//Doesn't work in anything beyond 1v1 combat
+
 		EnemyUnit enemy;
 		enemy.self = unit;
 		enemy.selfID = unit->getID();
@@ -207,18 +274,65 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 		}
 	}
 	else {//Neutral units.
-		//Unimplemented
+		//Nothing happens.
 	}
 }
 
 void InformationManager::OnUnitDestroy(Unit unit){
 	if (unit->getPlayer() == Broodwar->self()){
-		for (auto u : InformationManager::ourUnits){
-			if (u.self == unit){
-				InformationManager::ourUnits.erase(u);
+		int i = 0;
+		int j = 0;
+		CostumType tempType;
+		for (auto u : InformationManager::costumUnits){
+			if (u->unit == unit){
+				tempType = u->type;
+				if (u->type == CostumType::PRODUCER){
+					for (auto p : InformationManager::productionBuildings){
+						if (p->unit == unit){
+							InformationManager::productionBuildings.erase(InformationManager::productionBuildings.begin() + j);
+						}
+						j++;
+					}
+				}
+				else if (u->type == CostumType::TECH){
+					for (auto p : InformationManager::techBuildings){
+						if (p->unit == unit){
+							InformationManager::techBuildings.erase(InformationManager::techBuildings.begin() + j);
+						}
+						j++;
+					}
+				}
+				else if (u->type == CostumType::DEFENDER){
+					for (auto p : InformationManager::militaryBuildings){
+						if (p->unit == unit){
+							InformationManager::militaryBuildings.erase(InformationManager::militaryBuildings.begin() + j);
+						}
+						j++;
+					}
+				}
+				else if (u->type == CostumType::WORKER){
+					for (auto p : InformationManager::workerUnits){
+						if (p->unit == unit){
+							InformationManager::workerUnits.erase(InformationManager::workerUnits.begin() + j);
+						}
+						j++;
+					}
+				}
+				else if (u->type == CostumType::ATTACKER){
+					for (auto p : InformationManager::militaryUnits){
+						if (p->unit == unit){
+							InformationManager::militaryUnits.erase(InformationManager::militaryUnits.begin() + j);
+						}
+						j++;
+					}
+				}
+
+				InformationManager::costumUnits.erase(InformationManager::costumUnits.begin()+i);
 				break;
 			}
+			i++;
 		}
+
 		bool hasStillType = false;
 		for (auto u : Broodwar->self()->getUnits()){
 			if (u->getType() == unit->getType()){
@@ -245,9 +359,10 @@ void InformationManager::OnUnitDestroy(Unit unit){
 		InformationManager::enemyUnits = tempVector;
 	}
 	else {//Neutral units.
-		//Unimplemented
+		//Nothing happens.
 	}
 }
+
 
 void InformationManager::AssignUnit(UnitStatus unit, UnitState state, OwnerProcess process){
 	unit.state = state;
