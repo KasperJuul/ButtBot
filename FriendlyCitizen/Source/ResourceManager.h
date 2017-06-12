@@ -27,6 +27,8 @@ public:
 	static void findMinPatches();
 
 	static void stdGather();
+	static void qGather();
+	static void qGatherAlt();
 	static void queueManager();
 
 	static int workTime(mineralPatch m);

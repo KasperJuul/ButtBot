@@ -3,7 +3,6 @@
 #include "InformationManager.h"
 #include "BuildingPlacer.h"
 #include "Debug.h"
-#include "IntelManager.h"
 #include <BWTA.h>
 #include <iostream>
 #include <vector>
@@ -25,9 +24,9 @@ void ResourceManager::onStart(){
 void ResourceManager::onFrame(){
 
 	qGatherAlt();
+	buildPylonsNProbes();
 	//stdGather();
 	//queueManager();
-	buildPylonsNProbes();
 }
 
 void ResourceManager::findMinPatches(){
@@ -117,12 +116,6 @@ void ResourceManager::qGatherAlt(){
 				w->state = 0;
 			}
 			continue;
-		}
-
-		if (IntelManager::scout != NULL){
-			if (w->unit == IntelManager::scout->unit){
-				continue;
-			}
 		}
 
 		switch (w->state){
@@ -320,7 +313,7 @@ void ResourceManager::buildPylonsNProbes(){
 	{
 		if (u->getType().isResourceDepot()) // A resource depot is a Command Center, Nexus, or Hatchery
 		{
-			if (InformationManager::workerUnits.size() > 18){
+			if (InformationManager::wrkUnits.size() > 18){
 
 			}
 			// Order the depot to construct more workers! But only when it is idle.
