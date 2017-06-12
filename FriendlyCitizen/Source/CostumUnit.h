@@ -48,9 +48,12 @@ public:
 	}
 
 	BWAPI::Unit center;
+	bool inQ = false;
+	bool returningCargo = false;
 	ResourceManager::mineralPatch* mineral;
 	BWAPI::TilePosition buildTile;
 	BWAPI::UnitType buildUnit;
-	UnitState state = UnitState::FREE;
+	int state = 0;
+	UnitState unitState = UnitState::FREE;
 	OwnerProcess owner = OwnerProcess::FREE;
 };

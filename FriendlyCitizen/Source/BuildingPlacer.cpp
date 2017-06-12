@@ -26,7 +26,6 @@ void BuildingPlacer::onFrame(){
 		InformationManager::reservedMinerals = 0;
 	}
 
-
 	if (toBuild.mineralPrice() <= Broodwar->self()->minerals() && toBuild.gasPrice() <= Broodwar->self()->gas()){
 		if (toBuild.isBuilding()){
 			bool inProgress = false;
@@ -38,7 +37,7 @@ void BuildingPlacer::onFrame(){
 			if (!inProgress){
 				for (auto myUnit : InformationManager::workerUnits) {
 
-					if (myUnit->unit != IntelManager::scout.self && !myUnit->unit->isConstructing()) {
+					if (myUnit->unit != IntelManager::scout->unit && !myUnit->unit->isConstructing()) {
 						//Find a builtile
 						TilePosition buildTile = getBuildTile(toBuild, Broodwar->self()->getStartLocation());
 						//and, if found, send the worker to build it (and leave others alone - break;)
