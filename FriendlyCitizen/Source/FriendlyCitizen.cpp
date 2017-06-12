@@ -98,6 +98,15 @@ void FriendlyCitizen::onEnd(bool isWinner)
 	{
 		// Log your win here!
 	}
+	
+	BuildingPlanner::makePlanN();
+	std::vector<Priority> toTest = BuildingPlanner::findOrder();
+
+	std::vector<std::string> testToString;
+	for (auto p : toTest){
+		testToString.push_back(std::to_string(p.priority) + " " + p.unitType.getName());
+	}
+	Debug::writeLog(testToString,"newheuristics","test");
 
 	Debug::errorLogMessages("End Of Match");
 	Debug::endWriteLog();//New testing system!

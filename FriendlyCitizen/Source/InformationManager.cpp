@@ -217,7 +217,7 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 		if (!found){
 			InformationManager::costumUnits.push_back(temp);
 			if (unit->getType().isBuilding()){
-				if (unit->canTrain()){
+				if (unit->canTrain()){//Note: Nexus gets put here.
 					ProductionBuilding* temp = new ProductionBuilding();
 					temp->unit = unit;
 					InformationManager::productionBuildings.push_back(temp);
@@ -234,14 +234,14 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 				}
 			}
 			else{
-				if (unit->getType().isWorker()){
+				if (unit->getType().isWorker()){//Workers!
 					WorkerUnit* temp = new WorkerUnit();
 					temp->unit = unit;
 					temp->center = unit->getClosestUnit(Filter::IsResourceDepot);
 					temp->state = UnitState::FREE;
 					InformationManager::workerUnits.push_back(temp);
 				}
-				else{
+				else{//Support and extractor gets put here for some reason.
 					MilitaryUnit* temp = new MilitaryUnit();
 					temp->unit = unit;
 					InformationManager::militaryUnits.push_back(temp);
