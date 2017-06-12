@@ -171,5 +171,6 @@ int BuildingPlanner::heuristic(TechNode node){//Temporary function to calculate 
 	//State heuristics: At some point in time, a state might ask for a certain unit. Maybe.
 	//Infrastructure demand: Similar to the above, pylons and creep producers might be necessary for future construction.
 	value = demandValue + relativePrice + balanceValue + saturation;
+	//Broodwar << "Node: " << node.selfType.toString() << "Value: " << std::to_string(value) << std::endl;
 	return(value);
 }

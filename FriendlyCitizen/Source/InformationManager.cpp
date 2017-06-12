@@ -209,7 +209,7 @@ void InformationManager::OnNewUnit2(Unit unit){//Should only be called by Friend
 					WorkerUnit* temp = new WorkerUnit();
 					temp->unit = unit;
 					temp->center = unit->getClosestUnit(Filter::IsResourceDepot);
-					temp->state = UnitState::FREE;
+					temp->unitState = UnitState::FREE;
 					InformationManager::workerUnits.push_back(temp);
 				}
 				else{

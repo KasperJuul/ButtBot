@@ -14,6 +14,7 @@ using namespace BWAPI;
 using namespace Filter;
 
 //Debug settings
+bool haveScout = false;
 bool dbg_mode = true;
 bool debug = true;
 bool defog = false;
@@ -45,7 +46,9 @@ void FriendlyCitizen::onStart()
 		//Setup functions
 		InformationManager::StartAnalysis();//MUST be first!
 		ResourceManager::onStart();
-		IntelManager::StartScouting();
+		IntelManager::onStart();
+		IntelManager::hireScout();
+		//IntelManager::StartScouting();
 
 		analyzed = false;
 		analysis_just_finished = false;
@@ -55,9 +58,6 @@ void FriendlyCitizen::onStart()
 	//Broodwar->sendText("black sheep wall");
 	//Broodwar->sendText("operation cwal");
 	Broodwar->sendText("black sheep wall");
-	for (auto b : InformationManager::ourRace.getCenter().buildsWhat()){
-		Broodwar << b.toString() << std::endl;
-	}
 	
 
 }
@@ -100,7 +100,7 @@ void FriendlyCitizen::onFrame()
 	if (Broodwar->getFrameCount() % 40 == 0){
 		minelog += std::to_string(Broodwar->getFrameCount()) +
 			", " + std::to_string(Broodwar->self()->gatheredMinerals()) +
-			", " + std::to_string(InformationManager::wrkUnits.size()) + "\n";
+			", " + std::to_string(InformationManager::workerUnits.size()) + "\n";
 	}
 
 	// Return if the game is a replay or is paused
@@ -124,10 +124,13 @@ void FriendlyCitizen::onFrame()
 	
 
 	//Onframe functionality.
-	BuildingPlacer::onFrame();
+
+
+	//BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
-	IntelManager::ScoutOnFrame();
-	MilitaryManager::onFrame();
+	IntelManager::onFrame();
+	//IntelManager::ScoutOnFrame();
+	//MilitaryManager::onFrame();
 	
 }
 
@@ -337,6 +340,7 @@ void FriendlyCitizen::drawTerrainData()
 		Position leftTop(p.x * TILE_SIZE, p.y * TILE_SIZE);
 		Position rightBottom(leftTop.x + 4 * TILE_SIZE, leftTop.y + 3 * TILE_SIZE);
 		Broodwar->drawBoxMap(leftTop, rightBottom, Colors::Blue);
+		Broodwar->drawCircleMap(leftTop + Position(64,48), 128, Colors::Orange);
 
 		//draw a circle at each mineral patch
 		for (const auto& mineral : baseLocation->getStaticMinerals()) {
@@ -373,5 +377,6 @@ void FriendlyCitizen::drawTerrainData()
 			Broodwar->drawLineMap(point1, point2, Colors::Red);
 		}
 		Broodwar->drawCircleMap(region->getCenter(), 10, Colors::Purple);
+		Broodwar->drawCircleMap(region->getCenter(), 500, Colors::Purple);
 	}
 }
