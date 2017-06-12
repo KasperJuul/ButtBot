@@ -25,11 +25,25 @@ struct EnemyUnit{
 	int selfID;
 };
 
+struct Upgrade{//TODO: Manually keep track of upgrade's effect using a dedicated class for said information. *Sigh*
+	int level = 0;
+	//std::string selfType = "";
+	BWAPI::UpgradeType selfType = BWAPI::UpgradeTypes::None;
+};
+
+struct Ability{
+	bool researched = false;
+	BWAPI::TechType selfType = BWAPI::TechTypes::None;
+
+};
+
 struct TechNode{
 	std::vector<TechNode *> precondition; //Points back to nodes that are required for this unit to be build.
 	UnitType selfType; //This unit.
 	bool exists = false;
 	//int nodeCost = INT_MAX; //How many resources will this cost?
+	//Technology* technologyPrecondition = NULL;
+	//std::vector<Technology*> technologyEffect; //Pointless, seeing that only one unit in the entire game holds this prequisite, ands ince type already holds techEffect values.
 	std::vector<TechNode *> effect; //Points to nodes that can be built by this node.
 };
 
@@ -83,6 +97,8 @@ public:
 	static Race theirRace;
 	static std::vector<TechNode> theirTech;
 	static void makeTechGraph();
+	static std::vector<Upgrade*> upgradeList; //Keeps track of our upgrades. NOTE: No built-in way to keep track up upgrades nor abilities being finished.
+	static std::vector<Ability*> abilityList; //Keeps track of our abilities. NOTE Cont.: Manual solution should be made.
 
 	//Information - Dynamic
 	static int reservedMinerals;
@@ -102,8 +118,6 @@ public:
 
 	//######################### REFACTOR #########################################
 	//Information storage functions
-	static void OnNewUnit2(Unit unit);
-	static void OnUnitDestroy2(Unit unit);
 
 	static std::vector<CostumUnit*> costumUnits;
 	static std::vector<ProductionBuilding*> productionBuildings;

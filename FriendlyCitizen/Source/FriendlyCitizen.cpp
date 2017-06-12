@@ -17,7 +17,7 @@ using namespace Filter;
 bool haveScout = false;
 bool dbg_mode = true;
 bool debug = true;
-bool defog = false;
+bool defog = true;
 bool analyzed = false;
 bool analysis_just_finished;
 int optimisation = 2; //Using built-in bwapi optimisation
@@ -58,7 +58,6 @@ void FriendlyCitizen::onStart()
 	//Broodwar->sendText("black sheep wall");
 	//Broodwar->sendText("operation cwal");
 	Broodwar->sendText("black sheep wall");
-	
 
 }
 
@@ -80,11 +79,36 @@ void FriendlyCitizen::onEnd(bool isWinner)
 	}
 	Debug::writeLog(ResourceManager::log, "QueueLog", "Logs");
 	Debug::writeLog(FriendlyCitizen::minelog, "minLog", "Logs");
+
+	std::string temp2 = "Upgrades:\n";
+	for (auto t : InformationManager::upgradeList){
+		temp2 += t->selfType.getName() + "\n";
+	}
+
+	temp2 += "\nAbilities:\n";
+
+	for (auto t : InformationManager::abilityList){
+		temp2 += t->selfType.getName() + "\n";
+	}
+
+	Debug::writeLog(temp2, "technologies", "Logs");
 	// Called when the game ends
 	if (isWinner)
 	{
 		// Log your win here!
 	}
+	
+	BuildingPlanner::makePlanN();
+	std::vector<Priority> toTest = BuildingPlanner::findOrder();
+
+	std::vector<std::string> testToString;
+	for (auto p : toTest){
+		testToString.push_back(std::to_string(p.priority) + " " + p.unitType.getName());
+	}
+	Debug::writeLog(testToString,"newheuristics","test");
+
+	Debug::errorLogMessages("End Of Match");
+	Debug::endWriteLog();//New testing system!
 }
 
 void FriendlyCitizen::onFrame()
@@ -214,7 +238,6 @@ void FriendlyCitizen::onUnitHide(BWAPI::Unit unit)
 void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 {
 
-
 	//InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
 	{
@@ -231,13 +254,13 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 {
-	InformationManager::OnUnitDestroy2(unit);
+	InformationManager::OnUnitDestroy(unit);
 }
 
 void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
 {
-	InformationManager::OnUnitDestroy2(unit);
-	InformationManager::OnNewUnit2(unit);
+	InformationManager::OnUnitDestroy(unit);
+	InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
 	{
 		// if we are in a replay, then we will print out the build order of the structures
@@ -296,7 +319,7 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 			InformationManager::reservedGas -= unit->getType().gasPrice();
 		}
 	}
-	InformationManager::OnNewUnit2(unit);
+	InformationManager::OnNewUnit(unit);
 	if (unit->getPlayer() == Broodwar->self()){
 		if (unit->getType().isResourceDepot()){
 			Center temp;
@@ -312,7 +335,6 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 			}
 			BuildingPlacer::xpandIsBeingBuild = false;
 		}
-
 
 		if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
 			BuildingPlacer::supplyProviderIsBeingBuild = false;
