@@ -16,7 +16,7 @@ using namespace Filter;
 //Debug settings
 bool dbg_mode = true;
 bool debug = true;
-bool defog = false;
+bool defog = true;
 bool analyzed = false;
 bool analysis_just_finished;
 int optimisation = 2; //Using built-in bwapi optimisation
@@ -58,7 +58,6 @@ void FriendlyCitizen::onStart()
 	for (auto b : InformationManager::ourRace.getCenter().buildsWhat()){
 		Broodwar << b.toString() << std::endl;
 	}
-	
 
 }
 
@@ -236,7 +235,6 @@ void FriendlyCitizen::onUnitHide(BWAPI::Unit unit)
 void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 {
 
-
 	//InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
 	{
@@ -334,7 +332,6 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 			}
 			BuildingPlacer::xpandIsBeingBuild = false;
 		}
-
 
 		if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){
 			BuildingPlacer::supplyProviderIsBeingBuild = false;

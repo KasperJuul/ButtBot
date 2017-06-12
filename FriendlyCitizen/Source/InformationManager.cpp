@@ -270,7 +270,6 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 			}
 		}
 		if (newUnit){
-			//Broodwar << "Enemy found!" << std::endl;
 			InformationManager::enemyUnits.push_back(enemy);
 		}
 	}

@@ -34,6 +34,7 @@ struct Upgrade{//TODO: Manually keep track of upgrade's effect using a dedicated
 struct Ability{
 	bool researched = false;
 	BWAPI::TechType selfType = BWAPI::TechTypes::None;
+
 };
 
 struct TechNode{
