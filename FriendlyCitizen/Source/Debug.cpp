@@ -83,16 +83,22 @@ void Debug::screenInfo(){
 
 	std::string centers = "Centers: " + std::to_string(InformationManager::centers.size());
 	std::string workers = "Workers: " + std::to_string(InformationManager::workerUnits.size());
-	std::string pylon = "pylonIsInProgress: ";
-	if (BuildingPlacer::pylonIsInProgress){
-		pylon += "True";
-	}
-	else{
-		pylon += "False";
+	
+	std::string builders = "";
+	
+	int length = 0;
+	for (auto b : BuildingPlacer::builders){
+		if (length < 5){
+			builders += "[" + std::to_string(b->unit->getID()) + ", " + b->buildingProject.toString() + "] ";
+		}
+		else{
+			break;
+		}
+		length++;
 	}
 	
 	std::string priorities = "";
-	int length = 0;
+	length = 0;
 	for (auto b : BuildingPlanner::findOrder()){
 		if (length < 5){
 			priorities += "[" + b.unitType.toString() + "] ";
@@ -106,7 +112,7 @@ void Debug::screenInfo(){
 	Broodwar->drawTextScreen(20, 0, centers.c_str());
 	Broodwar->drawTextScreen(20, 10, workers.c_str());
 
-	Broodwar->drawTextScreen(20, 20, pylon.c_str());
+	Broodwar->drawTextScreen(20, 20, builders.c_str());
 
 	Broodwar->drawTextScreen(20, 30, priorities.c_str());
 
@@ -125,7 +131,7 @@ void Debug::screenInfo(){
 //	}
 
 
-	Broodwar->drawTextScreen(20, 200, std::to_string(InformationManager::enemyUnits.size()).c_str());
+	//Broodwar->drawTextScreen(20, 200, std::to_string(InformationManager::enemyUnits.size()).c_str());
 	int some = 0;
 	for (auto m :ResourceManager::minPatches){
 		std::string minstring = m.name + ": ";
@@ -147,7 +153,7 @@ void Debug::screenInfo(){
 
 		some++;
 
-		if (some > 8){
+		if (some > 16){
 			break;
 		}
 	}

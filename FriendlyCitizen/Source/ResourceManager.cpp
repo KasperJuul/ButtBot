@@ -44,6 +44,21 @@ void ResourceManager::findMinPatches(){
 	}
 }
 
+void ResourceManager::addMinPatches( Unit unit){
+	int itr = minPatches.size();
+	for (auto m : Broodwar->getMinerals()){
+		if (BWTA::getRegion(unit->getTilePosition())->getPolygon().isInside(m->getPosition())){
+			mineralPatch temp;
+			temp.unit = m;
+			temp.name = "M" + std::to_string(itr);
+			temp.workers.clear();
+			minPatches.push_back(temp);
+			itr++;
+		}
+	}
+}
+
+
 void ResourceManager::stdGather(){
 	for (auto w : InformationManager::workerUnits){
 		if (!w->unit->isConstructing() && !w->unit->isGatheringMinerals()){

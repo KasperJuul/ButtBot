@@ -20,8 +20,6 @@ void BuildingPlacer::onStart(){
 }
 
 void BuildingPlacer::onFrame(){
-
-
 	//If someone is a miner and has a plan, errolog
 	for (auto w : InformationManager::workerUnits){
 		if (!w->builder && w->buildingProject != UnitTypes::None){

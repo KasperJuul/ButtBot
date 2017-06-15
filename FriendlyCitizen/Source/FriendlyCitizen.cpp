@@ -48,9 +48,9 @@ void FriendlyCitizen::onStart()
 		Broodwar << "We are playing as" << Broodwar->self()->getRace() << std::endl;
 		//Setup functions
 		InformationManager::StartAnalysis();//MUST be first!
-		//ResourceManager::onStart();
-		//IntelManager::onStart();
-		//IntelManager::hireScout();
+		ResourceManager::onStart();
+		IntelManager::onStart();
+		IntelManager::hireScout();
 		//IntelManager::StartScouting();
 
 		analyzed = false;
@@ -62,9 +62,11 @@ void FriendlyCitizen::onStart()
 	//Broodwar->sendText("show me the money");
 	//Broodwar->sendText("operation cwal");
 	//Broodwar->sendText("black sheep wall");
-	Broodwar->sendText("power overwhelming");
-	Broodwar->sendText("food for thought");
-	Broodwar->sendText("modify the phase variance");
+	Broodwar->sendText("whats mine is mine");
+	Broodwar->sendText("whats mine is mine");
+	//Broodwar->sendText("power overwhelming");
+	//Broodwar->sendText("food for thought");
+	//Broodwar->sendText("modify the phase variance");
 
 	InformationManager::regionSetup();
 }
@@ -181,7 +183,7 @@ void FriendlyCitizen::onFrame()
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
 	IntelManager::onFrame();
-	MilitaryManager::onFrame();
+	//MilitaryManager::onFrame();
 
 }
 
@@ -398,6 +400,7 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 	InformationManager::OnNewUnit(unit);
 	if (unit->getPlayer() == Broodwar->self()){
 		if (unit->getType().isResourceDepot()){
+			
 			Center temp;
 			temp.unit = unit;
 			temp.wrkUnits.clear();

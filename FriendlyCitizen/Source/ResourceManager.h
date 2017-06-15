@@ -25,6 +25,7 @@ public:
 	static void buildPylonsNProbes2();
 	static void drawMinCircles();
 	static void findMinPatches();
+	static void addMinPatches(BWAPI::Unit unit);
 
 	static void stdGather();
 	static void qGather();
