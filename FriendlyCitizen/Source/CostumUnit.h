@@ -36,6 +36,7 @@ public:
 
 class MilitaryUnit : public CostumUnit {
 public:
+	int placement = -1;
 	MilitaryUnit(){
 		type = CostumType::ATTACKER;
 	}

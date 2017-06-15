@@ -21,12 +21,14 @@ void BuildingPlacer::onStart(){
 
 void BuildingPlacer::onFrame(){
 
+
 	//If someone is a miner and has a plan, errolog
 	for (auto w : InformationManager::workerUnits){
 		if (!w->builder && w->buildingProject != UnitTypes::None){
 			Debug::errorLogMessages("Miner has buildproject and is not a builder!");
 		}
 	}
+
 	if (InformationManager::reservedMinerals < 0){
 		InformationManager::reservedMinerals = 0;
 		Debug::errorLogMessages("Reserved minerals negative");
@@ -323,6 +325,7 @@ TilePosition BuildingPlacer::naturalExpantion(){
 		return buildTile;
 	}
 	else{
+
 		InformationManager::baseLocations.erase(InformationManager::baseLocations.begin() + erase_itr);
 		return buildTile;
 	}
@@ -343,6 +346,7 @@ TilePosition BuildingPlacer::expantion(){
 		if (Broodwar->canBuildHere(b->getTilePosition(), InformationManager::ourRace.getCenter(), false) && groundDist > 0 && groundDist < globalMinDist){
 			globalMinDist = groundDist;
 			buildTile = b->getTilePosition();
+
 		}
 	}
 	return buildTile;

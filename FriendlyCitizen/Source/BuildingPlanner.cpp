@@ -686,7 +686,7 @@ std::vector<Priority> BuildingPlanner::makePlanN(){
 	return fullList;
 }
 
-UnitType BuildingPlanner::makePlan(){
+/*UnitType BuildingPlanner::makePlan(){
 	std::vector<TechNode> possibleNodes;
 	for (int i = 0; i < InformationManager::ourTech.size(); i++){
 		bool valid = true;
@@ -731,9 +731,9 @@ UnitType BuildingPlanner::makePlan(){
 	//Broodwar << possibleNodes.at(chosenID).selfType.getName() << " : " << std::to_string(chosenHeuristicsValue).c_str() << std::endl;
 	
 	return UnitType(possibleNodes.at(chosenID).selfType);
-}
+}*/
 
-int BuildingPlanner::heuristic(TechNode node){//Temporary function to calculate simple heuristical values.
+/*int BuildingPlanner::heuristic(TechNode node){//Temporary function to calculate simple heuristical values.
 	//TODO: Handle unresearched technologies.
 	//TODO: Refactor/clean up code.
 	int value = 0;
@@ -825,4 +825,4 @@ int BuildingPlanner::heuristic(TechNode node){//Temporary function to calculate 
 	value = demandValue + relativePrice + balanceValue + saturation;
 	//Broodwar << "Node: " << node.selfType.toString() << "Value: " << std::to_string(value) << std::endl;
 	return(value);
-}
+}*/

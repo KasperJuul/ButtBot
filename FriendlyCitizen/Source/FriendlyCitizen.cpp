@@ -23,6 +23,9 @@ bool analysis_just_finished;
 int optimisation = 2; //Using built-in bwapi optimisation
 std::string FriendlyCitizen::minelog = "";
 
+//Enemy
+bool firstEncounter = false;
+
 void FriendlyCitizen::onStart()
 {
 	BWTA::analyze();
@@ -32,7 +35,7 @@ void FriendlyCitizen::onStart()
 		Broodwar->enableFlag(Flag::UserInput);
 	}
 	if (defog){//Allows our bot to attain an unfair information advantage
-		Broodwar->enableFlag(Flag::CompleteMapInformation);
+		//Broodwar->enableFlag(Flag::CompleteMapInformation);
 	}
 	Broodwar->setCommandOptimizationLevel(optimisation);//I've no idea
 
@@ -45,9 +48,9 @@ void FriendlyCitizen::onStart()
 		Broodwar << "We are playing as" << Broodwar->self()->getRace() << std::endl;
 		//Setup functions
 		InformationManager::StartAnalysis();//MUST be first!
-		ResourceManager::onStart();
-		IntelManager::onStart();
-		IntelManager::hireScout();
+		//ResourceManager::onStart();
+		//IntelManager::onStart();
+		//IntelManager::hireScout();
 		//IntelManager::StartScouting();
 
 		analyzed = false;
@@ -55,10 +58,15 @@ void FriendlyCitizen::onStart()
 	}
 	Broodwar->setLocalSpeed(41);
 
+
 	//Broodwar->sendText("show me the money");
 	//Broodwar->sendText("operation cwal");
 	//Broodwar->sendText("black sheep wall");
+	Broodwar->sendText("power overwhelming");
+	Broodwar->sendText("food for thought");
+	Broodwar->sendText("modify the phase variance");
 
+	InformationManager::regionSetup();
 }
 
 void FriendlyCitizen::onEnd(bool isWinner)
@@ -107,6 +115,24 @@ void FriendlyCitizen::onEnd(bool isWinner)
 	}
 	Debug::writeLog(testToString,"newheuristics","test");
 
+	std::vector<std::string> enemyVectorDebug;
+	for (auto eu : InformationManager::enemyUnits){
+		if (eu.visible){
+			enemyVectorDebug.push_back("VISIBLE: " + eu.selfType.getName() + " at (" + std::to_string(eu.self->getPosition().x) + "," + std::to_string(eu.self->getPosition().y) + ")");
+		}
+		else {
+			enemyVectorDebug.push_back("INVISIBLE: " + eu.selfType.getName() + " at (" + std::to_string(eu.lastSeen.x) + "," + std::to_string(eu.lastSeen.y) + ")");
+		}
+	}
+	Debug::writeLog(enemyVectorDebug,"enemyscoutingtest","test");
+
+	std::vector<std::string> debug;
+	for (auto r : InformationManager::regions){
+		debug.push_back("Section owned by " + std::to_string(r.owner) + " at " + std::to_string(r.self->getCenter().x) + "," + std::to_string(r.self->getCenter().y));
+	}
+
+	Debug::writeLog(debug, "regiondebug", "test");
+
 	Debug::errorLogMessages("End Of Match");
 	Debug::endWriteLog();//New testing system!
 }
@@ -151,11 +177,12 @@ void FriendlyCitizen::onFrame()
 	//Onframe functionality.
 
 
+
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
 	IntelManager::onFrame();
-	//MilitaryManager::onFrame();
-	
+	MilitaryManager::onFrame();
+
 }
 
 void FriendlyCitizen::onSendText(std::string text)
@@ -225,14 +252,33 @@ void FriendlyCitizen::onUnitDiscover(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitEvade(BWAPI::Unit unit)
 {
+	
 }
 
 void FriendlyCitizen::onUnitShow(BWAPI::Unit unit)
 {
+	if (unit->getPlayer() != Broodwar->self()){
+		if (!firstEncounter){
+			InformationManager::firstEncounter(unit->getPlayer()->getRace());
+			firstEncounter = true;
+			Broodwar << "Their race is... " << InformationManager::theirRace.getName() << std::endl;
+		}
+		InformationManager::OnUnitDestroy(unit);
+		InformationManager::OnNewUnit(unit);
+		InformationManager::regionAnalyze();
+	}
 }
 
 void FriendlyCitizen::onUnitHide(BWAPI::Unit unit)
 {
+	if (unit->getPlayer() != Broodwar->self()){
+
+		for (int i = 0; i < InformationManager::enemyUnits.size(); i++){
+			if (InformationManager::enemyUnits.at(i).selfID == unit->getID()){
+				InformationManager::enemyUnits.at(i).visible = false;
+			}
+		}
+	}
 }
 
 void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
@@ -261,6 +307,7 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 {
 	InformationManager::OnUnitDestroy(unit);
+
 	if (unit->getType().isWorker()){
 		int witr = 0;
 		for (auto w : InformationManager::workerUnits){
@@ -278,6 +325,9 @@ void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 			witr++;
 		}
 	}
+
+	InformationManager::regionAnalyze();
+
 }
 
 void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
@@ -318,6 +368,7 @@ void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
 		}
 		Broodwar << "unit " << std::to_string(unit->getID()) << " has morphed into " << unit->getType().toString() << std::endl;
 	}
+	InformationManager::regionAnalyze();
 }
 
 void FriendlyCitizen::onUnitRenegade(BWAPI::Unit unit)
@@ -366,6 +417,7 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 
 		}
 	}
+	InformationManager::regionAnalyze();
 }
 
 DWORD WINAPI AnalyzeThread()
@@ -424,6 +476,6 @@ void FriendlyCitizen::drawTerrainData()
 			Broodwar->drawLineMap(point1, point2, Colors::Red);
 		}
 		Broodwar->drawCircleMap(region->getCenter(), 10, Colors::Purple);
-		Broodwar->drawCircleMap(region->getCenter(), 500, Colors::Purple);
+		Broodwar->drawCircleMap(region->getCenter(), 1000, Colors::Red);
 	}
 }

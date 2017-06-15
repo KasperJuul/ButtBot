@@ -1,4 +1,5 @@
 #pragma once
+#include "MilitaryManager.h"
 #include "Debug.h"
 #include "InformationManager.h"
 #include "BuildingPlanner.h"
@@ -104,6 +105,7 @@ void Debug::screenInfo(){
 
 	Broodwar->drawTextScreen(20, 0, centers.c_str());
 	Broodwar->drawTextScreen(20, 10, workers.c_str());
+
 	Broodwar->drawTextScreen(20, 20, pylon.c_str());
 
 	Broodwar->drawTextScreen(20, 30, priorities.c_str());
@@ -112,6 +114,18 @@ void Debug::screenInfo(){
 	Broodwar->drawTextScreen(20, 50, "Mili = %d", (int) BuildingPlanner::mili);
 	Broodwar->drawTextScreen(20, 60, "Tech = %d", (int) BuildingPlanner::tech);
 
+//	Broodwar->drawTextScreen(20, 30, std::to_string(MilitaryManager::mainState).c_str());
+//	int i = 4;
+//	for (auto u : InformationManager::enemyUnits){
+//		Broodwar->drawTextScreen(20, 10*i, u.selfType.getName().c_str());
+//		i++;
+//		if (i > 19){
+//			break;
+//		}
+//	}
+
+
+	Broodwar->drawTextScreen(20, 200, std::to_string(InformationManager::enemyUnits.size()).c_str());
 	int some = 0;
 	for (auto m :ResourceManager::minPatches){
 		std::string minstring = m.name + ": ";
