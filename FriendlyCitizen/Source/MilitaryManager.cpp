@@ -1,27 +1,198 @@
 #pragma once
 #include "MilitaryManager.h"
 #include "InformationManager.h"
+#include "BuildingPlanner.h"
 #include "Debug.h"
 #include <BWTA.h>
 #include <iostream>
 #include <vector>
 
-void MilitaryManager::onFrame(){
-	std::vector<BWAPI::Unit> military;
-	for (auto &u : Broodwar->self()->getUnits()){
-		if (!u->getType().isWorker() && u->getType().canAttack() && u->isIdle()){
-			military.push_back(u);
+int MilitaryManager::regionCounter = 0;
+MainStates MilitaryManager::mainState = MainStates::Defensive;
+std::vector<int> MilitaryManager::enemyRegions;
+std::vector<int> MilitaryManager::disputedRegions;
+std::vector<int> MilitaryManager::allyRegions;
+
+void MilitaryManager::regionUpdate(){
+	MilitaryManager::allyRegions.clear();
+	MilitaryManager::disputedRegions.clear();
+	MilitaryManager::enemyRegions.clear();
+	int i = 0;
+	for (auto r : InformationManager::regions){
+		switch (r.owner){
+		case OwningPlayer::Self : 
+			MilitaryManager::allyRegions.push_back(i);
+			break;
+		
+		case OwningPlayer::Enemy:
+			MilitaryManager::enemyRegions.push_back(i);
+
+			break;
+
+		case OwningPlayer::Dispute:
+			MilitaryManager::disputedRegions.push_back(i);
 			
-		}	
-	}
-	if (military.size() > 5){
-		for (auto &u : military){
-			for (EnemyUnit eu : InformationManager::enemyUnits){
-				u->attack(eu.lastSeen);
-				Broodwar << "Attack!! \n";
-				break;
-			}
+			break;
 		}
+
+		i++;
+	}
+}
+
+void MilitaryManager::onFrame(){
+	regionUpdate();
+	float ourStrength = 0;
+	float theirStrength = 0;
+
+	for (auto ou : InformationManager::costumUnits){
+		float temp = BuildingPlanner::combatValue(ou->unit->getType()) + BuildingPlanner::specialValue(ou->unit->getType());//TODO: make custom heuristic for military
+		if (temp > 0){
+			ourStrength += temp;
+		}
+	}
+
+	bool noBuildingsorVisible = true;
+	for (auto eu : InformationManager::enemyUnits){
+		float temp = BuildingPlanner::combatValue(eu.selfType) + BuildingPlanner::specialValue(eu.selfType);
+		if (temp > 0){
+			theirStrength += temp;
+		}
+		if (eu.selfType.isBuilding() || eu.visible){
+			noBuildingsorVisible = false;
+		}
+	}
+
+	BWAPI::Broodwar->drawTextScreen(100, 30, std::to_string(ourStrength).c_str());
+	BWAPI::Broodwar->drawTextScreen(100, 40, std::to_string(theirStrength).c_str());
+
+	if (noBuildingsorVisible && mainState!=MainStates::Intel){
+		mainState = MainStates::Intel;
+		MilitaryManager::regionCounter = 0;
+		for (int i = 0; i < InformationManager::militaryUnits.size(); i++){//Deassign
+			InformationManager::militaryUnits.at(i)->placement = -1;
+		}
+	}
+	else if (!noBuildingsorVisible && mainState == MainStates::Intel){
+		mainState = MainStates::Offensive;
+		return;
+	}
+
+
+	switch (mainState){
+	case MainStates::Defensive:
+	{
+								  if (theirStrength*1.5 < ourStrength){
+									  mainState = MainStates::Offensive; 
+									  for (int i = 0; i < InformationManager::militaryUnits.size(); i++){//Deassign
+										  InformationManager::militaryUnits.at(i)->placement = -1;
+									  }
+									  break;
+								  }
+								  /*Unit proto;//Prototype
+								  for (auto u : InformationManager::costumUnits){
+								  if (u->unit->getType() == InformationManager::ourRace.getCenter()){
+								  proto = u->unit;
+								  }
+								  }
+								  for (auto u : InformationManager::militaryUnits){
+								  u->unit->move(proto->getPosition());
+								  }*/
+
+								  //Finding offensive forces
+								  std::set<BWAPI::Unit> targets;
+								  for (auto ar : allyRegions){
+									  for (auto u : Broodwar->getUnitsInRadius(InformationManager::regions.at(ar).self->getCenter(), 1000, BWAPI::Filter::IsEnemy)){
+										  targets.insert(u);
+									  }
+								  }
+								  for (auto dr : disputedRegions){
+									  for (auto u : Broodwar->getUnitsInRadius(InformationManager::regions.at(dr).self->getCenter(), 1000, BWAPI::Filter::IsEnemy)){
+										  targets.insert(u);
+									  }
+								  }
+
+								  //Assigning defensive forces
+								  for (int i = 0; i < InformationManager::militaryUnits.size(); i++){
+									  InformationManager::militaryUnits.at(i)->placement = i % (allyRegions.size()+disputedRegions.size());
+								  }
+								  for (auto mu : InformationManager::militaryUnits){
+									  MiliHTN::defend(*mu, targets);
+								  }
+	}
+		break;
+	//END OF DEFENSIVE
+
+	case MainStates::Offensive:
+	{
+								  if (theirStrength*1.1 > ourStrength){
+									  mainState = MainStates::Defensive;
+									  break;
+								  }
+
+								 /* EnemyUnit proto;//Prototype
+								  for (auto u : InformationManager::enemyUnits){
+									  if (u.visible){
+										  proto = u;
+										  break;
+									  }
+									  if (u.selfType.isBuilding()){
+										  proto = u;
+										  break;
+									  }
+								  }
+								  for (auto u : InformationManager::militaryUnits){
+									  u->unit->move(proto.lastSeen);
+								  }*/
+
+
+								  std::set<BWAPI::Unit> targets;
+								  for (auto cu : InformationManager::costumUnits){
+									  for (auto u : Broodwar->getUnitsInRadius(cu->unit->getPosition(), 1000, BWAPI::Filter::IsEnemy)){
+										  targets.insert(u);
+									  }
+								  }
+								  std::vector<EnemyUnit> targetBuildings;
+								  for (auto eu : InformationManager::enemyUnits){
+									  if (eu.selfType.isBuilding()){
+										  targetBuildings.push_back(eu);
+									  }
+								  }
+								  for (auto mu : InformationManager::militaryUnits){
+									  MiliHTN::invade(*mu, targets, targetBuildings);
+								  }
+	}
+		break;
+	//END OF OFFENSIVE
+
+	case MainStates::Intel:
+	{
+							  //Assign regions
+							  for (int i = 0; i < InformationManager::militaryUnits.size(); i++){//Deassign
+								  if (InformationManager::militaryUnits.at(i)->placement == -1){
+									  InformationManager::militaryUnits.at(i)->placement = regionCounter;
+									  regionCounter++;
+									  regionCounter = regionCounter%InformationManager::regions.size();
+								  }
+
+								  //Move into assigned region, then move randomly. Inspired by old code.
+
+								  if (BWTA::getRegion(InformationManager::militaryUnits.at(i)->unit->getPosition()) ==
+									  InformationManager::regions.at(InformationManager::militaryUnits.at(i)->placement).self &&
+									  InformationManager::militaryUnits.at(i)->unit->isIdle()
+									){
+									BWTA::Polygon toScout = InformationManager::regions.at(InformationManager::militaryUnits.at(i)->placement).self->getPolygon();
+									InformationManager::militaryUnits.at(i)->unit->move(toScout.at(rand() % toScout.size()));
+								  }
+								  else {
+									  InformationManager::militaryUnits.at(i)->unit->move(
+										  InformationManager::regions.at(InformationManager::militaryUnits.at(i)->placement).self->getCenter());
+								  }
+							  }
+
+
+	}
+		break;
+	//END OF INTEL
 	}
 
 }

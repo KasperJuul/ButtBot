@@ -10,18 +10,26 @@
 #include <set>
 
 using namespace BWAPI;
-
+enum OwningPlayer{Self,Enemy,Neutral,Dispute};//Based on buildings only. Dispute = buildings of both players. Neutral = no player buildings.
 
 
 // ################### REFACTOR #########################
 
 //######################################################################################################
 
+struct RegionStruct{
+	BWTA::Region* self;
+	std::vector<RegionStruct*> neighbours;
+	//All data we want to add
+	OwningPlayer owner = OwningPlayer::Neutral;
+
+};
 
 struct EnemyUnit{
 	Unit self;//This unit (pointer)
 	UnitType selfType;
 	Position lastSeen;
+	bool visible = false;
 	int selfID;
 };
 
@@ -97,15 +105,24 @@ public:
 	static Race theirRace;
 	static std::vector<TechNode> theirTech;
 	static void makeTechGraph();
+	static void firstEncounter();
 	static std::vector<Upgrade*> upgradeList; //Keeps track of our upgrades. NOTE: No built-in way to keep track up upgrades nor abilities being finished.
 	static std::vector<Ability*> abilityList; //Keeps track of our abilities. NOTE Cont.: Manual solution should be made.
+	static std::vector<Upgrade*> enemyUpgradeList;
+	static std::vector<Ability*> enemyAbilityList;
+	static void firstEncounter(BWAPI::Race theirRace);
+
+	//Region analysis
+	
 
 	//Information - Dynamic
 	static int reservedMinerals;
 	static int reservedGas;
-	static std::set<UnitStatus> ourUnits; //Catalogues the units we have
+	//static std::set<UnitStatus> ourUnits; //Catalogues the units we have **REPLACED BY COSTUM UNITS**
 	static std::set<UnitType> ourUnitTypes; //Catalogues the unittypes we have
 	static std::vector<EnemyUnit> enemyUnits;//Catalogues enemy units
+	static std::vector<UnitType> enemyUnitTypes; //Catalogues what unittypes they probably have
+
 
 	//Depcrecated - To be refactored.
 	static Unit firstCenter; //Swap out with better, generalized functionality later
@@ -127,4 +144,9 @@ public:
 	static std::vector<WorkerUnit*> workerUnits;
 
 	//############################################################################
+
+	//Last week patchwork
+	static void regionSetup();
+	static std::vector<RegionStruct> regions;
+	static void regionAnalyze();
 };
