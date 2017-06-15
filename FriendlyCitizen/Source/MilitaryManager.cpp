@@ -148,9 +148,7 @@ void MilitaryManager::onFrame(){
 								  std::set<BWAPI::Unit> targets;
 								  for (auto cu : InformationManager::costumUnits){
 									  for (auto u : Broodwar->getUnitsInRadius(cu->unit->getPosition(), 1000, BWAPI::Filter::IsEnemy)){
-										  if (u->getType() != UnitTypes::Zerg_Larva){
-											  targets.insert(u);
-										  }
+										  targets.insert(u);
 									  }
 								  }
 								  std::vector<EnemyUnit> targetBuildings;
