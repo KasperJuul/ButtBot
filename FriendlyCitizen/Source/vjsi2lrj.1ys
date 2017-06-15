@@ -57,7 +57,7 @@ void FriendlyCitizen::onStart()
 
 	//Broodwar->sendText("show me the money");
 	//Broodwar->sendText("operation cwal");
-	//Broodwar->sendText("black sheep wall");
+	Broodwar->sendText("black sheep wall");
 
 }
 
@@ -119,7 +119,6 @@ void FriendlyCitizen::onFrame()
 
 	if (dbg_mode){
 		Debug::screenInfo();
-		//drawTerrainData();
 	}
 
 	if (Broodwar->getFrameCount() % 40 == 0){
@@ -131,7 +130,7 @@ void FriendlyCitizen::onFrame()
 	// Return if the game is a replay or is paused
 	if (Broodwar->isReplay() || Broodwar->isPaused() || !Broodwar->self())
 		return;
-	
+	drawTerrainData();
 	//BWTA draw
 	if (analyzed)
 		drawTerrainData();
@@ -238,11 +237,8 @@ void FriendlyCitizen::onUnitHide(BWAPI::Unit unit)
 void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 {
 	if (unit->getPlayer() == Broodwar->self()){
-		if (unit->getType().isBuilding()){
-			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
-			InformationManager::reservedGas -= unit->getType().gasPrice();
-		}
-		
+		InformationManager::reservedMinerals -= unit->getType().mineralPrice();
+		InformationManager::reservedGas -= unit->getType().gasPrice();
 	}
 	//InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
@@ -296,10 +292,7 @@ void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
 		}
 	}
 	if (unit->getPlayer() == Broodwar->self()){
-		
 		if (unit->getType().isBuilding()){
-			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
-			InformationManager::reservedGas -= unit->getType().gasPrice();
 			bool found = false;
 			for (auto &c : InformationManager::centers){
 				int itr = 0;

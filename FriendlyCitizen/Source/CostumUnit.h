@@ -50,9 +50,14 @@ public:
 	BWAPI::Unit center;
 	bool inQ = false;
 	bool returningCargo = false;
+	bool gasworker = false;
+	bool builder = false;
+	bool contract = false;
+	bool isScout = false;
+	bool firstTimeZero = true;
+	BWAPI::TilePosition buildTarget = BWAPI::TilePositions::None;
 	ResourceManager::mineralPatch* mineral;
-	BWAPI::TilePosition buildTile;
-	BWAPI::UnitType buildUnit;
+	BWAPI::UnitType buildingProject = BWAPI::UnitTypes::None;
 	int state = 0;
 	UnitState unitState = UnitState::FREE;
 	OwnerProcess owner = OwnerProcess::FREE;

@@ -7,6 +7,10 @@
 
 std::string BuildingPlanner::plan;
 
+float BuildingPlanner::econ = 0;
+float BuildingPlanner::mili = 0;
+float BuildingPlanner::tech = 0;
+
 void BuildingPlanner::plannerOnFrame(){
 
 	/*makePlan();//TEST, REMOVE LATER
@@ -34,9 +38,9 @@ BWAPI::UnitType BuildingPlanner::chooseBetweenMilitary(std::vector<TechNode> sel
 
 std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std::vector<Priority> economy, Priority technology){
 	std::vector<Priority> finalOrder;
-	float econ = 0;
-	float mili = 0;
-	float tech = 0;
+	econ = 0;
+	mili = 0;
+	tech = 0;
 	for (auto u : InformationManager::militaryUnits){//Contains refinery and support. Needs to be fixed.
 		if (u->unit->getType() == InformationManager::ourRace.getSupplyProvider()){
 			econ += InformationManager::ourRace.getSupplyProvider().mineralPrice();
@@ -69,22 +73,22 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 	}
 
 	float totalSpend = econ + tech + mili;
-	econ -= 750;
+	econ -= 1000;
 	econ = econ / totalSpend * 100;
 	tech = tech / totalSpend * 100;
 	mili = mili / totalSpend * 100;
 
 	mili = 50 - mili+(float)0.02;
-	econ = 30 - econ+(float)0.01;
-	tech = 20 - tech;
+	econ = 40 - econ+(float)0.01;
+	tech = 10 - tech;
 
 	//Higher value comes before lower value. If tied, mili>econ>tech. This is not ensured by the structure below, but by the += 0.02~ above.
 	if (mili>econ && mili>tech){
 		finalOrder = military;
 		for (auto test : finalOrder){
-			Debug::errorLogMessages("Military contains... " + test.unitType.getName());
+			//Debug::errorLogMessages("Military contains... " + test.unitType.getName());
 		}
-		Debug::errorLogMessages("End");
+		//Debug::errorLogMessages("End");
 		//mili first
 		if (econ > tech){
 			//Econ second, tech third
@@ -93,15 +97,15 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 			}
 
 			for (auto test : finalOrder){
-				Debug::errorLogMessages("econ with contains... " + test.unitType.getName());
+				//Debug::errorLogMessages("econ with contains... " + test.unitType.getName());
 			}
-			Debug::errorLogMessages("End1");
+			//Debug::errorLogMessages("End1");
 			finalOrder.push_back(technology);
 
 			for (auto test : finalOrder){
-				Debug::errorLogMessages("tech with contains... " + test.unitType.getName());
+				//Debug::errorLogMessages("tech with contains... " + test.unitType.getName());
 			}
-			Debug::errorLogMessages("End2");
+			//Debug::errorLogMessages("End2");
 		}
 		else {
 			//Tech second, econ third
@@ -184,18 +188,18 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 							}
 							if (exists){//Yes!
 								toSelectFrom.push_back(ot);
-								Debug::errorLogMessages("This shouldn't be called atm");
+								//Debug::errorLogMessages("This shouldn't be called atm");
 							}//Or no?
 							break;
 						}
 					}
 					if (!toSelectFrom.empty()){
-						Debug::errorLogMessages("This shouldn't be called atm");
+						//Debug::errorLogMessages("This shouldn't be called atm");
 						UnitType tempType = chooseBetweenMilitary(toSelectFrom);
 						Priority temp;
 						temp.priority = combatValue(tempType) + specialValue(tempType);
 						temp.unitType = tempType;
-						temp.unitType = TypeDec::UnitDec;
+						temp.declaration = TypeDec::UnitDec;
 						military.push_back(temp);
 					}
 				}
@@ -255,7 +259,7 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 		if (f > max){
 			techSelect = InformationManager::ourTech.at(i).selfType;
 			max = f;
-			Debug::errorLogMessages(techSelect.getName()+ " has been chosen with value " + std::to_string(max));
+			//Debug::errorLogMessages(techSelect.getName()+ " has been chosen with value " + std::to_string(max));
 		}
 		i++;
 	}
@@ -268,21 +272,30 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 	center.priority = econValue(InformationManager::ourRace.getCenter());
 	center.unitType = InformationManager::ourRace.getCenter();
 	center.declaration = TypeDec::UnitDec;
-	economy.push_back(center);
+	if (center.priority > 50){
+		economy.push_back(center);
+	}
+	
 
 
 	Priority refinery;
 	refinery.priority = econValue(InformationManager::ourRace.getRefinery());
 	refinery.unitType = InformationManager::ourRace.getRefinery();
 	refinery.declaration = TypeDec::UnitDec;
-	economy.push_back(refinery);
+	if (refinery.priority > 50 &&
+		Broodwar->self()->completedUnitCount(InformationManager::ourRace.getRefinery()) < Broodwar->self()->completedUnitCount(InformationManager::ourRace.getCenter())){
+		economy.push_back(refinery);
+	}
 
 
 	Priority supplier;
 	supplier.priority = econValue(InformationManager::ourRace.getSupplyProvider());
 	supplier.unitType = InformationManager::ourRace.getSupplyProvider();
 	supplier.declaration = TypeDec::UnitDec;
-	economy.push_back(supplier);
+	if (supplier.priority > 50){
+		economy.push_back(supplier);
+	}
+	
 
 	std::sort(military.rbegin(),military.rend());
 	std::sort(economy.rbegin(), economy.rend());
@@ -319,7 +332,7 @@ float BuildingPlanner::combatValue(TechNode toAnalyze){
 			type += 0.25;
 		}
 
-		Debug::errorLogMessages("The unit " + toAnalyze.selfType.getName() + " has the following formula: " + std::to_string(dpf) + " * " + std::to_string(type) + " * (" + std::to_string(toAnalyze.selfType.maxHitPoints()) + "+" + std::to_string(toAnalyze.selfType.maxShields()) + ")*(1+0.1*" + std::to_string(toAnalyze.selfType.armor()) + ")");
+		//Debug::errorLogMessages("The unit " + toAnalyze.selfType.getName() + " has the following formula: " + std::to_string(dpf) + " * " + std::to_string(type) + " * (" + std::to_string(toAnalyze.selfType.maxHitPoints()) + "+" + std::to_string(toAnalyze.selfType.maxShields()) + ")*(1+0.1*" + std::to_string(toAnalyze.selfType.armor()) + ")");
 		return dpf*type*(toAnalyze.selfType.maxHitPoints() + toAnalyze.selfType.maxShields())*(1 + 0.1*toAnalyze.selfType.armor());
 	}
 }
