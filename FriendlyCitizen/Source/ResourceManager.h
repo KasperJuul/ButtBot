@@ -28,7 +28,8 @@ public:
 
 	static void stdGather();
 	static void qGather();
-	static void gasGather();
+	static void qGatherAlt();
+	static void queueManager();
 
 	static int workTime(mineralPatch m);
 	static int workTime(BWAPI::Unit unit, mineralPatch m, int n);

@@ -24,10 +24,10 @@ void ResourceManager::onStart(){
 
 void ResourceManager::onFrame(){
 
-	qGather();
-	gasGather();
+	qGatherAlt();
 	//stdGather();
-	//buildPylonsNProbes();
+	//queueManager();
+	buildPylonsNProbes();
 }
 
 void ResourceManager::findMinPatches(){
@@ -53,41 +53,9 @@ void ResourceManager::stdGather(){
 	}
 }
 
-void ResourceManager::gasGather(){
-	if (Broodwar->self()->completedUnitCount(InformationManager::ourRace.getRefinery()) > 0){
-		int gasworkers = 0;
-		for (auto w : InformationManager::workerUnits){
-			if (w->unit->isConstructing()){ continue; }
-			if (w->gasworker){
-				gasworkers++;
-			}
-			else if (gasworkers < 3){
-				if (!w->builder){
-					if (w->inQ){
-						for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
-							if (w->mineral->workers.at(i) = w->unit){
-								w->mineral->workers.erase(w->mineral->workers.begin() + i);
-								w->inQ = false;
-							}
-						}
-					}
-					w->unit->gather(w->unit->getClosestUnit(IsRefinery));
-					w->state = 0;
-					w->gasworker = true;
-					w->returningCargo = false;
-					gasworkers++;
-				}
-				
-			}
-		}
-	}
-
-}
-
 void ResourceManager::qGather(){
 	for (auto w : InformationManager::workerUnits){
-
-		if (w->gasworker || w->builder){
+		if (w->unit->isConstructing()){ 
 			if (w->inQ){
 				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
 					if (w->mineral->workers.at(i) = w->unit){
@@ -96,9 +64,60 @@ void ResourceManager::qGather(){
 					}
 				}
 			}
-			continue;
+			continue; 
 		}
 
+		if (!w->inQ){
+			if (!w->unit->isCarryingMinerals()){
+				log += "Calculating round trip for Worker[" + std::to_string(w->unit->getID()) + "] : \n";
+				mineralPatch* tempMineralpatch = roundTrip_min(w->unit, &minPatches);
+				tempMineralpatch->workers.push_back(w->unit);
+				w->mineral = tempMineralpatch;
+				w->inQ = true;
+				log += "Worker[" + std::to_string(w->unit->getID()) + "] queued at " + tempMineralpatch->name + "\n";
+			}
+		}
+		else if (!w->unit->isCarryingMinerals()){
+			if (w->unit == w->mineral->workers.at(0)){
+				if (w->unit->isGatheringMinerals()){
+					continue;
+				}
+			}
+			w->unit->gather(w->mineral->unit);
+		}
+		else if (w->unit->isCarryingMinerals()){
+			if (w->inQ){
+				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
+					if (w->mineral->workers.at(i) = w->unit){
+						w->mineral->workers.erase(w->mineral->workers.begin() + i);
+						w->inQ = false;
+					}
+				}	
+			}
+			w->unit->returnCargo();
+		}
+	}
+}
+
+void ResourceManager::qGatherAlt(){
+	for (auto w : InformationManager::workerUnits){
+		if (w->unit->isConstructing()){
+			if (w->inQ){
+				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
+					if (w->mineral->workers.at(i) = w->unit){
+						w->mineral->workers.erase(w->mineral->workers.begin() + i);
+						w->inQ = false;
+					}
+				}
+			}
+			if (w->unit->isCarryingMinerals()){
+				w->state = 3;
+			}
+			else{
+				w->state = 0;
+			}
+			continue;
+		}
 
 		if (IntelManager::scout != NULL){
 			if (w->unit == IntelManager::scout->unit){
@@ -175,6 +194,56 @@ void ResourceManager::qGather(){
 			}
 			break;
 		}
+
+		/*
+		if (w->inQ){
+			if (w->unit->isCarryingMinerals()){
+				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
+					if (w->mineral->workers.at(i) = w->unit){
+						w->mineral->workers.erase(w->mineral->workers.begin() + i);
+						w->inQ = false;					
+					}
+					w->unit->returnCargo();
+					w->returningCargo = true;
+				}	
+			}
+			else{
+				if (w->unit == w->mineral->workers.front() && w->unit->isGatheringMinerals()){
+					continue;
+				}
+				else{
+					if (w->unit == w->mineral->workers.front()){
+						w->unit->gather(w->mineral->unit);
+					}
+					else{
+						if (w->unit->getDistance(w->mineral->unit) < 2){
+							w->unit->stop();
+						}
+						else if (w->unit->isGatheringMinerals()){
+							continue;
+						}
+						else{
+							w->unit->gather(w->mineral->unit);
+						}
+					}	
+				}
+			}
+		}
+		else{
+			if (w->unit->isCarryingMinerals() && !w->returningCargo){
+				w->unit->returnCargo();
+			}
+			else if (!w->unit->isCarryingMinerals()){
+				w->returningCargo = false;
+				log += "Calculating round trip for Worker[" + std::to_string(w->unit->getID()) + "] : \n";
+				mineralPatch* tempMineralpatch = roundTrip_min(w->unit, &minPatches);
+				tempMineralpatch->workers.push_back(w->unit);
+				w->mineral = tempMineralpatch;
+				w->inQ = true;
+				log += "Worker[" + std::to_string(w->unit->getID()) + "] queued at " + tempMineralpatch->name + "\n";
+			}
+		}
+		*/
 	}
 }
 
@@ -223,19 +292,19 @@ int ResourceManager::roundTrip(Unit unit, mineralPatch m){
 
 ResourceManager::mineralPatch* ResourceManager::roundTrip_min(Unit unit, std::vector<ResourceManager::mineralPatch>* patches){
 	int time = 1000000;
-	int patchItr = 0;
+	int derp = 0;
 	int itr = 0;
 	for (auto m : *patches){
 		int tripTime = roundTrip(unit, m);
 		if (tripTime < time){
 			time = tripTime;
-			patchItr = itr;
+			derp = itr;
 			
 		}
 		itr++;
 	
 	}
-	return &patches->at(patchItr);
+	return &patches->at(derp);
 }
 
 ///////////////// OLD STUFF //////////////////////////////////////////

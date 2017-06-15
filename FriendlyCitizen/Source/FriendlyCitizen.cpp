@@ -58,11 +58,15 @@ void FriendlyCitizen::onStart()
 	}
 	Broodwar->setLocalSpeed(41);
 
-
-	//Broodwar->sendText("show me the money");
-	//Broodwar->sendText("operation cwal");
+	//Broodwar->sendText("black sheep wall");
+	Broodwar->sendText("operation cwal");
 	//Broodwar->sendText("black sheep wall");
 	Broodwar->sendText("power overwhelming");
+	Broodwar->sendText("show me the money");
+	Broodwar->sendText("show me the money");
+	Broodwar->sendText("show me the money");
+	Broodwar->sendText("show me the money");
+	Broodwar->sendText("show me the money");
 	Broodwar->sendText("food for thought");
 	Broodwar->sendText("modify the phase variance");
 
@@ -145,7 +149,6 @@ void FriendlyCitizen::onFrame()
 
 	if (dbg_mode){
 		Debug::screenInfo();
-		//drawTerrainData();
 	}
 
 	if (Broodwar->getFrameCount() % 40 == 0){
@@ -157,7 +160,7 @@ void FriendlyCitizen::onFrame()
 	// Return if the game is a replay or is paused
 	if (Broodwar->isReplay() || Broodwar->isPaused() || !Broodwar->self())
 		return;
-	
+	drawTerrainData();
 	//BWTA draw
 	if (analyzed)
 		drawTerrainData();
@@ -177,11 +180,12 @@ void FriendlyCitizen::onFrame()
 	//Onframe functionality.
 
 
-
-	BuildingPlacer::onFrame();
-	ResourceManager::onFrame();
-	IntelManager::onFrame();
+	//BuildingPlacer::onFrame();
+	//ResourceManager::onFrame();
+	//IntelManager::onFrame();
+	//IntelManager::ScoutOnFrame();
 	MilitaryManager::onFrame();
+	
 
 }
 
@@ -283,13 +287,7 @@ void FriendlyCitizen::onUnitHide(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 {
-	if (unit->getPlayer() == Broodwar->self()){
-		if (unit->getType().isBuilding()){
-			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
-			InformationManager::reservedGas -= unit->getType().gasPrice();
-		}
-		
-	}
+
 	//InformationManager::OnNewUnit(unit);
 	if (Broodwar->isReplay())
 	{
@@ -307,27 +305,7 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 {
 	InformationManager::OnUnitDestroy(unit);
-
-	if (unit->getType().isWorker()){
-		int witr = 0;
-		for (auto w : InformationManager::workerUnits){
-			if (w->unit == unit){
-				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
-					if (w->mineral->workers.at(i) = w->unit){
-						w->mineral->workers.erase(w->mineral->workers.begin() + i);
-						w->inQ = false;
-						w->returningCargo = false;
-						w->state = 0;
-					}
-				}
-				InformationManager::workerUnits.erase(InformationManager::workerUnits.begin() + witr);
-			}
-			witr++;
-		}
-	}
-
 	InformationManager::regionAnalyze();
-
 }
 
 void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
@@ -346,10 +324,7 @@ void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
 		}
 	}
 	if (unit->getPlayer() == Broodwar->self()){
-		
 		if (unit->getType().isBuilding()){
-			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
-			InformationManager::reservedGas -= unit->getType().gasPrice();
 			bool found = false;
 			for (auto &c : InformationManager::centers){
 				int itr = 0;
@@ -392,7 +367,8 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 				}
 				itr++;
 			}
-			
+			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
+			InformationManager::reservedGas -= unit->getType().gasPrice();
 		}
 	}
 	InformationManager::OnNewUnit(unit);
