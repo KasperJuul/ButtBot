@@ -52,6 +52,7 @@ void MiliHTN::invade(MilitaryUnit invader, std::set<BWAPI::Unit> targets, std::v
 		}
 	}
 	else {
+
 		int enemyRange = 0;
 		int allyRange = 0;
 		if (invader.unit->getType().isFlyer()){
@@ -68,7 +69,7 @@ void MiliHTN::invade(MilitaryUnit invader, std::set<BWAPI::Unit> targets, std::v
 			allyRange = invader.unit->getType().groundWeapon().maxRange();
 		}
 
-		if (nearest->getType().topSpeed() <= invader.unit->getType().topSpeed() && allyRange > enemyRange){
+		if (nearest->getType().topSpeed() <= invader.unit->getType().topSpeed() && allyRange > enemyRange && !nearest->getType().isBuilding()){
 			MiliHTN::kiteAttack(invader.unit, nearest);
 		}
 		else {
@@ -121,7 +122,7 @@ void MiliHTN::defend(MilitaryUnit defender, std::set<BWAPI::Unit> targets){
 			allyRange = defender.unit->getType().groundWeapon().maxRange();
 		}
 
-		if (nearest->getType().topSpeed() <= defender.unit->getType().topSpeed() && allyRange > enemyRange){
+		if (nearest->getType().topSpeed() <= defender.unit->getType().topSpeed() && allyRange > enemyRange && !nearest->getType().isBuilding()){
 			MiliHTN::kiteAttack(defender.unit, nearest);
 		}
 		else {
@@ -171,6 +172,9 @@ BWAPI::Unit MiliHTN::chooseTarget(BWAPI::Unit attacker, std::set<BWAPI::Unit> ta
 		}
 
 		double damage = u->getType().groundWeapon().damageAmount() + u->getType().airWeapon().damageAmount();
+		if (damage < 1){
+			damage = 1;
+		}
 		double val = u->getDistance(attacker)/damage - damage / (double)(u->getHitPoints() + u->getShields());
 		if (val < min){
 			min = val;
