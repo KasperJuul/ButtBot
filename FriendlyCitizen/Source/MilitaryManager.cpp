@@ -45,6 +45,16 @@ void MilitaryManager::onFrame(){
 	float theirStrength = 0;
 
 	for (auto ou : InformationManager::costumUnits){
+		if (ou->unit->getType().groundWeapon().damageAmount() < 1 && ou->unit->getType().airWeapon().damageAmount() < 1){
+			continue;
+		}
+		if (ou->unit->getType() == BWAPI::UnitTypes::Zerg_Overlord){
+			continue;
+		}
+		if (ou->unit->getType() == Broodwar->self()->getRace().getWorker()){
+			continue;
+		}
+
 		float temp = BuildingPlanner::combatValue(ou->unit->getType()) + BuildingPlanner::specialValue(ou->unit->getType());//TODO: make custom heuristic for military
 		if (temp > 0){
 			ourStrength += temp;
@@ -53,6 +63,15 @@ void MilitaryManager::onFrame(){
 
 	bool noBuildingsorVisible = true;
 	for (auto eu : InformationManager::enemyUnits){
+		if (eu.selfType.groundWeapon().damageAmount() < 1 && eu.selfType.airWeapon().damageAmount() < 1){
+			continue;
+		}
+		if (eu.selfType == BWAPI::UnitTypes::Zerg_Overlord){
+			continue;
+		}
+		if (eu.selfType == Broodwar->enemy()->getRace().getWorker()){
+			continue;
+		}
 		float temp = BuildingPlanner::combatValue(eu.selfType) + BuildingPlanner::specialValue(eu.selfType);
 		if (temp > 0){
 			theirStrength += temp;
@@ -115,6 +134,9 @@ void MilitaryManager::onFrame(){
 
 								  //Assigning defensive forces
 								  for (int i = 0; i < InformationManager::militaryUnits.size(); i++){
+									  if ((allyRegions.size() + disputedRegions.size()) == 0){
+										  return;//Give up!
+									  }
 									  InformationManager::militaryUnits.at(i)->placement = i % (allyRegions.size()+disputedRegions.size());
 								  }
 								  for (auto mu : InformationManager::militaryUnits){

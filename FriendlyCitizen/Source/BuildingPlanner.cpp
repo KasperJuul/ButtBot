@@ -82,9 +82,53 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 	econ = 40 - econ+(float)0.01;
 	tech = 10 - tech;
 
+	Priority supplier;
+	supplier.priority = econValue(InformationManager::ourRace.getSupplyProvider());
+	supplier.unitType = InformationManager::ourRace.getSupplyProvider();
+	supplier.declaration = TypeDec::UnitDec;
+	if (supplier.priority > 50){
+		finalOrder.push_back(supplier);
+	}
 	//Higher value comes before lower value. If tied, mili>econ>tech. This is not ensured by the structure below, but by the += 0.02~ above.
 	if (mili>econ && mili>tech){
-		finalOrder = military;
+		//finalOrder = military;
+		for (auto mili : military){
+			finalOrder.push_back(mili);
+		}
+
+		//Second production creator
+		if (Broodwar->self()->getRace() == BWAPI::Races::Protoss){
+			int count = Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Gateway);
+			if (count > 0 && count < 2){
+				Priority temp;
+				temp.declaration = TypeDec::UnitDec;
+				temp.priority = 0;
+				temp.unitType = BWAPI::UnitTypes::Protoss_Gateway;
+				finalOrder.push_back(temp);
+			}
+		}
+		else if (Broodwar->self()->getRace() == BWAPI::Races::Zerg){
+			int count = Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Zerg_Spawning_Pool);
+			int count2 = Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Zerg_Hatchery);
+			if (count > 0 && count2 < 2){
+				Priority temp;
+				temp.declaration = TypeDec::UnitDec;
+				temp.priority = 0;
+				temp.unitType = BWAPI::UnitTypes::Zerg_Hatchery;
+				finalOrder.push_back(temp);
+			}
+		}
+		else if(Broodwar->self()->getRace() == BWAPI::Races::Terran){
+			int count = Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Terran_Barracks);
+			if (count > 0 && count < 2){
+				Priority temp;
+				temp.declaration = TypeDec::UnitDec;
+				temp.priority = 0;
+				temp.unitType = BWAPI::UnitTypes::Terran_Barracks;
+				finalOrder.push_back(temp);
+			}
+		}
+
 		for (auto test : finalOrder){
 			//Debug::errorLogMessages("Military contains... " + test.unitType.getName());
 		}
@@ -176,36 +220,76 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 				economy.push_back(temp);
 			}
 			else {
-				for (auto ut : u->unit->getType().buildsWhat()){//This unit builds x...
-					std::vector<TechNode> toSelectFrom;
-					for (auto ot : InformationManager::ourTech){//Which is represented somewhere in ourTech...
-						if (ot.selfType == ut){//Which has now been found.
-							bool exists = true;
-							for (auto pre : ot.precondition){//But have we unlocked the unit as of yet?
-								if (!pre->exists){
-									exists = false;
+				if (Broodwar->self()->getRace() != BWAPI::Races::Zerg){//Zergs produces all their units from larva or drones (or upgrade morphs)! They have NO production buildings!
+					for (auto ut : u->unit->getType().buildsWhat()){//This unit builds x...
+						std::vector<TechNode> toSelectFrom;
+						for (auto ot : InformationManager::ourTech){//Which is represented somewhere in ourTech...
+							if (ot.selfType == ut){//Which has now been found.
+								bool exists = true;
+								for (auto pre : ot.precondition){//But have we unlocked the unit as of yet?
+									if (!pre->exists){
+										exists = false;
+									}
 								}
+								if (exists){//Yes!
+									toSelectFrom.push_back(ot);
+									//Debug::errorLogMessages("This shouldn't be called atm");
+								}//Or no?
+								break;
 							}
-							if (exists){//Yes!
-								toSelectFrom.push_back(ot);
-								//Debug::errorLogMessages("This shouldn't be called atm");
-							}//Or no?
-							break;
+						}
+						if (!toSelectFrom.empty()){
+							//Debug::errorLogMessages("This shouldn't be called atm");
+							UnitType tempType = chooseBetweenMilitary(toSelectFrom);
+							Priority temp;
+							temp.priority = combatValue(tempType) + specialValue(tempType);
+							temp.unitType = tempType;
+							temp.declaration = TypeDec::UnitDec;
+							military.push_back(temp);
 						}
 					}
-					if (!toSelectFrom.empty()){
-						//Debug::errorLogMessages("This shouldn't be called atm");
-						UnitType tempType = chooseBetweenMilitary(toSelectFrom);
-						Priority temp;
-						temp.priority = combatValue(tempType) + specialValue(tempType);
-						temp.unitType = tempType;
-						temp.declaration = TypeDec::UnitDec;
-						military.push_back(temp);
-					}
+					
 				}
+				else { //If Zerg...
+
+				}
+
 			}
 		}
 	}//End of Production buildings
+
+	if (Broodwar->self()->getRace() == BWAPI::Races::Zerg){
+		for (auto ut : BWAPI::UnitTypes::Zerg_Larva.buildsWhat()){//This unit builds x...
+			if (ut == BWAPI::UnitTypes::Zerg_Drone ||ut == BWAPI::UnitTypes::Zerg_Overlord){
+				continue;
+			}
+			std::vector<TechNode> toSelectFrom;
+			for (auto ot : InformationManager::ourTech){//Which is represented somewhere in ourTech...
+				if (ot.selfType == ut){//Which has now been found.
+					bool exists = true;
+					for (auto pre : ot.precondition){//But have we unlocked the unit as of yet?
+						if (!pre->exists){
+							exists = false;
+						}
+					}
+					if (exists){//Yes!
+						toSelectFrom.push_back(ot);
+						//Debug::errorLogMessages("This shouldn't be called atm");
+					}//Or no?
+					break;
+				}
+			}
+			if (!toSelectFrom.empty()){
+				//Debug::errorLogMessages("This shouldn't be called atm");
+				UnitType tempType = chooseBetweenMilitary(toSelectFrom);
+				Priority temp;
+				temp.priority = combatValue(tempType) + specialValue(tempType);
+				temp.unitType = tempType;
+				temp.declaration = TypeDec::UnitDec;
+				military.push_back(temp);
+			}
+		}
+	}
 
 	std::vector<int> possibleNodes;
 	std::vector<int> currentNodes;//Probably pointless?
@@ -293,7 +377,7 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 	supplier.unitType = InformationManager::ourRace.getSupplyProvider();
 	supplier.declaration = TypeDec::UnitDec;
 	if (supplier.priority > 50){
-		economy.push_back(supplier);
+		//economy.push_back(supplier);
 	}
 	
 
@@ -303,38 +387,7 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 }
 
 float BuildingPlanner::combatValue(TechNode toAnalyze){
-	//Manually handled edge cases:
-	if (toAnalyze.selfType == BWAPI::UnitTypes::Protoss_Scarab){//Due to their insta-damage ability, the calculations for DPF bug out, causing scarabs to get overrated
-		return 50;
-	}
-	if (toAnalyze.selfType == BWAPI::UnitTypes::Protoss_Reaver){//Due to the fact that they don't directly attack, the DPF doesn't work, causing them to be underrated
-		return 250;
-	}
-	if (toAnalyze.selfType == BWAPI::UnitTypes::Protoss_Interceptor){//Same as Scarab, although not as severe.
-		return 25;
-	}
-	if (toAnalyze.selfType == BWAPI::UnitTypes::Protoss_Carrier){//Same as reaver
-		return 200;
-	}
-	if (toAnalyze.selfType.groundWeapon() == BWAPI::WeaponTypes::None){
-		return 0;
-	}
-	else {
-		float dpf = (float)toAnalyze.selfType.groundWeapon().damageAmount() * (float) toAnalyze.selfType.maxGroundHits() / (float) toAnalyze.selfType.groundWeapon().damageCooldown(); //Damage per frame
-		float type = 1;
-		if (toAnalyze.selfType.groundWeapon().damageType() == BWAPI::DamageTypes::Concussive){
-			type -= 0.25;
-		}
-		if (toAnalyze.selfType.groundWeapon().damageType() == BWAPI::DamageTypes::Explosive){
-			type -= 0.25;
-		}
-		if (toAnalyze.selfType.groundWeapon().outerSplashRadius() > 0){
-			type += 0.25;
-		}
-
-		//Debug::errorLogMessages("The unit " + toAnalyze.selfType.getName() + " has the following formula: " + std::to_string(dpf) + " * " + std::to_string(type) + " * (" + std::to_string(toAnalyze.selfType.maxHitPoints()) + "+" + std::to_string(toAnalyze.selfType.maxShields()) + ")*(1+0.1*" + std::to_string(toAnalyze.selfType.armor()) + ")");
-		return dpf*type*(toAnalyze.selfType.maxHitPoints() + toAnalyze.selfType.maxShields())*(1 + 0.1*toAnalyze.selfType.armor());
-	}
+	return combatValue(toAnalyze.selfType);
 }
 
 float BuildingPlanner::combatValue(UnitType toAnalyze){
@@ -368,35 +421,14 @@ float BuildingPlanner::combatValue(UnitType toAnalyze){
 		}
 
 		//Debug::errorLogMessages("The unit " + toAnalyze.getName() + " has the following formula: " + std::to_string(dpf) + " * " + std::to_string(type) + " * (" + std::to_string(toAnalyze.maxHitPoints()) + "+" + std::to_string(toAnalyze.maxShields()) + ")*(1+0.1*" + std::to_string(toAnalyze.selfType.armor()) + ")");
-		return dpf*type*(toAnalyze.maxHitPoints() + toAnalyze.maxShields())*(1 + 0.1*toAnalyze.armor());
+		return dpf*type*(toAnalyze.maxHitPoints() + toAnalyze.maxShields())*(1 + 0.1*toAnalyze.armor())+pow(toAnalyze.groundWeapon().maxRange()/32,2)+pow(toAnalyze.airWeapon().maxRange()/32,2);
 	}
 }
 
 float BuildingPlanner::econValue(TechNode toAnalyze){
-	if (Broodwar->self()->getRace().getSupplyProvider().getName() == toAnalyze.selfType.getName()){//Support unit
-		if ((float)Broodwar->self()->supplyUsed()*1.25 > Broodwar->self()->supplyTotal()){//Supporter, ie: Pylons, overlords, etc.
-			return 100;
-		}
-		else {
-			return 0;
-		}
-	}
-	if (Broodwar->self()->getRace().getRefinery().getName() == toAnalyze.selfType.getName()){//Gas production
-		float F = 100; //Predetermined factor
-		return F / (9.0 - (float)InformationManager::workerUnits.size() + 0.1); //Formula: F / (Minerals in regions we own - probes we own + 0.1). +0.1 to avoid division by zero.
-	}
-	if (Broodwar->self()->getRace().getWorker().getName() == toAnalyze.selfType.getName()){//Worker
-		float F = 100; //Predetermined factor
-		return std::min((float)pow(2 * 9 + 3 - ((float)InformationManager::workerUnits.size() + 0.1), 2.0),(float)90.0); //Formula: (2*minerals we own + 3 * regions we own with gas) / (probes we own +0.1). +0.1 to avoid division by zero.
-	}
-	if (Broodwar->self()->getRace().getCenter().getName() == toAnalyze.selfType.getName()){//Expansion
-		float F = 100; //Predetermined factor
-		return F / (2*9+3-(float)InformationManager::workerUnits.size()); //Formula: F / (2*minerals we own + 3 - probes we own + 0.1). +0.1 to avoid division by zero
-	}
-	//If anything has economic value, it should be included here later.
-	return 0;
+	return econValue(toAnalyze.selfType);
 }
-
+	
 float BuildingPlanner::econValue(UnitType toAnalyze){
 	if (Broodwar->self()->getRace().getSupplyProvider().getName() == toAnalyze.getName()){//Support unit
 		if ((float)Broodwar->self()->supplyUsed()*1.25 > Broodwar->self()->supplyTotal()){//Supporter, ie: Pylons, overlords, etc.
@@ -407,69 +439,44 @@ float BuildingPlanner::econValue(UnitType toAnalyze){
 		}
 	}
 	if (Broodwar->self()->getRace().getRefinery().getName() == toAnalyze.getName()){//Gas production
+		int allyGas = 0;
+		int count = Broodwar->self()->completedUnitCount(Broodwar->self()->getRace().getRefinery());
+		for (auto r : InformationManager::regions){
+			if (r.owner == OwningPlayer::Self){
+				allyGas++;
+			}
+		}
+		if (allyGas <= count){
+			return 0;
+		}
+
 		float F = 100; //Predetermined factor
-		return F / (9.0 - (float)InformationManager::workerUnits.size() + 0.1); //Formula: F / (Minerals in regions we own - probes we own + 0.1). +0.1 to avoid division by zero.
+		float toDivide = 11.0 + (21 * count) - (float)InformationManager::workerUnits.size();
+		if (toDivide <= 1){ toDivide = 1; }
+		return F / toDivide; //Formula: F / (Minerals in regions we own - probes we own + 0.1). +0.1 to avoid division by zero.
 	}
 	if (Broodwar->self()->getRace().getWorker().getName() == toAnalyze.getName()){//Worker
+		int count = Broodwar->self()->completedUnitCount(Broodwar->self()->getRace().getCenter());
+		int count2 = Broodwar->self()->completedUnitCount(Broodwar->self()->getRace().getWorker());
+		if (count2 > 21*count ||count2>50){
+			return 0;
+		}
 		float F = 100; //Predetermined factor
-		return std::min((float)pow(2 * 9 + 3 - ((float)InformationManager::workerUnits.size() + 0.1), 2.0), (float)90.0); //Formula: (2*minerals we own + 3 * regions we own with gas) / (probes we own +0.1). +0.1 to avoid division by zero.
+		return std::min((float)pow(2 * 9 * count + 3 * count - count2, 2.0), (float)90.0); //Formula: (2*minerals we own + 3 * regions we own with gas) / (probes we own +0.1). +0.1 to avoid division by zero.
 	}
 	if (Broodwar->self()->getRace().getCenter().getName() == toAnalyze.getName()){//Expansion
+		int count = Broodwar->self()->completedUnitCount(Broodwar->self()->getRace().getCenter());
 		float F = 100; //Predetermined factor
-		return F / (2 * 9 + 3 - (float)InformationManager::workerUnits.size()); //Formula: F / (2*minerals we own + 3 - probes we own + 0.1). +0.1 to avoid division by zero
+		float toDivide = (2 * 9 * count + 3 * count - (float)InformationManager::workerUnits.size());
+		if (toDivide <= 1){ toDivide = 1; }
+		return F / toDivide; //Formula: F / (2*minerals we own + 3 - probes we own + 0.1). +0.1 to avoid division by zero
 	}
 	//If anything has economic value, it should be included here later.
 	return 0;
 }
 
 float BuildingPlanner::specialValue(TechNode toAnalyze){//TODO: Implement Not Needed and Needed values.
-	float val = 0;
-	if (toAnalyze.selfType.isBuilding()){//Counts as defensive/static
-		if (toAnalyze.selfType.isDetector()){//Defensive detector
-			val += 10; //Satiated value.
-		}
-		if (toAnalyze.selfType.canAttack() || toAnalyze.selfType == BWAPI::UnitTypes::Terran_Bunker){//Defensive turret
-			val += 10; //Satiated value.
-		}
-	}
-	else {
-		if (toAnalyze.selfType.isCloakable() || toAnalyze.selfType.hasPermanentCloak()){//Stealth unit
-			val += 25;
-		}
-		if (toAnalyze.selfType.isDetector()){
-			val += 25;
-		}
-		if (toAnalyze.selfType.groundWeapon() != BWAPI::WeaponTypes::None){//If can attack ground!
-			if (toAnalyze.selfType.groundWeapon().maxRange()/32 >= 6){
-				val += 25;
-			}
-
-			if (toAnalyze.selfType.groundWeapon().maxRange() / 32 >= 4 && toAnalyze.selfType.topSpeed() > 5){//Temporary functionality - Should be relative to enemy kiteability
-				val += 10;
-			}
-
-			if (toAnalyze.selfType.isFlyer()){//Air VS Ground
-				val += 10;
-				if (toAnalyze.selfType.airWeapon() != BWAPI::WeaponTypes::None){//Air VS Air
-					val += 0;
-				}
-			}
-			else {//Ground unit
-				if (toAnalyze.selfType.airWeapon() != BWAPI::WeaponTypes::None){//Ground VS Air
-					val += 10;
-				}
-			}
-		}
-		else if (toAnalyze.selfType.airWeapon() != BWAPI::WeaponTypes::None){
-			if (toAnalyze.selfType.isFlyer()){// Air VS Air
-				val += 0;
-			}
-			else { //Ground VS Air
-				val += 10;
-			}
-		}
-	}
-	return val;
+	return specialValue(toAnalyze.selfType);
 }
 
 float BuildingPlanner::specialValue(UnitType toAnalyze){//TODO: Implement Not Needed and Needed values.
