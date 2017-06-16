@@ -25,11 +25,11 @@ public:
 	static void buildPylonsNProbes2();
 	static void drawMinCircles();
 	static void findMinPatches();
+	static void addMinPatches(BWAPI::Unit unit);
 
 	static void stdGather();
 	static void qGather();
-	static void qGatherAlt();
-	static void queueManager();
+	static void gasGather();
 
 	static int workTime(mineralPatch m);
 	static int workTime(BWAPI::Unit unit, mineralPatch m, int n);

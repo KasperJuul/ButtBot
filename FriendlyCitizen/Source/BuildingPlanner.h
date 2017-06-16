@@ -44,4 +44,8 @@ public:
 	static void plannerOnFrame();
 	//static int heuristic(TechNode node);
 	static std::string plan;
+
+	static float econ;
+	static float mili;
+	static float tech;
 };

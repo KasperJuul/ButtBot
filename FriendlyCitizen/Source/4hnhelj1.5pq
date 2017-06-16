@@ -20,27 +20,15 @@ void BuildingPlacer::onStart(){
 }
 
 void BuildingPlacer::onFrame(){
-	//If someone is a miner and has a plan, errolog
-	for (auto w : InformationManager::workerUnits){
-		if (!w->builder && w->buildingProject != UnitTypes::None){
-			Debug::errorLogMessages("Miner has buildproject and is not a builder!");
-		}
-	}
 
 	if (InformationManager::reservedMinerals < 0){
 		InformationManager::reservedMinerals = 0;
-		Debug::errorLogMessages("Reserved minerals negative");
 	}
 	if (InformationManager::reservedGas < 0){
 		InformationManager::reservedGas = 0;
-		Debug::errorLogMessages("Reserved gas negative");
 	}
 
 	for (auto build : BuildingPlanner::findOrder()){
-		if (build.unitType == UnitTypes::None){
-			continue;
-		}
-
 		bool canAfford = build.unitType.mineralPrice() <= (Broodwar->self()->minerals() - InformationManager::reservedMinerals)
 						 && build.unitType.gasPrice() <= (Broodwar->self()->gas() - InformationManager::reservedGas);
 		
@@ -54,26 +42,11 @@ void BuildingPlacer::onFrame(){
 				}
 				if (!ip && Broodwar->self()->incompleteUnitCount(build.unitType) < 1){
 					hireBuilder(build.unitType);
+					//buildOrTrain(build.unitType);
 				}
 			}
 			else{
-				for (auto &u : Broodwar->self()->getUnits()){
-					if (u->canTrain(build.unitType) && u->isIdle()){
-						if (Broodwar->self()->supplyTotal() - Broodwar->self()->supplyUsed() - build.unitType.supplyRequired() >= 0){
-							u->train(build.unitType);
-						}
-						else {
-							bool canAfford2 = build.unitType.mineralPrice() <= (Broodwar->self()->minerals() - InformationManager::reservedMinerals)
-								&& build.unitType.gasPrice() <= (Broodwar->self()->gas() - InformationManager::reservedGas);
-							if (canAfford2){
-								hireBuilder(Broodwar->self()->getRace().getSupplyProvider());
-							}
-							
-						}
-						
-						break;
-					}
-				}
+				buildOrTrain(build.unitType);
 			}
 			
 		}
@@ -165,7 +138,7 @@ void BuildingPlacer::builderStateMachine(){
 			break;
 		case 2:	// Moving to build 
 			
-			if (b->unit->getDistance((Position)b->buildTarget) < Broodwar->self()->getRace().getWorker().sightRange()-20){
+			if (b->unit->getDistance((Position)b->buildTarget) < 64){
 				b->unit->build(b->buildingProject, b->buildTarget);
 				b->state = 3;
 			}
@@ -173,11 +146,6 @@ void BuildingPlacer::builderStateMachine(){
 			break;
 		case 3:	// Building
 			if (b->unit->isIdle()){
-				if (Broodwar->self()->incompleteUnitCount(b->buildingProject) < 1){
-					Debug::errorLogMessages("Dave didn't do his job");
-					InformationManager::reservedMinerals -= b->buildingProject.mineralPrice();
-					InformationManager::reservedGas -= b->buildingProject.gasPrice();
-				}				
 				releaseBuilder(b);
 			}
 			break;
@@ -185,8 +153,7 @@ void BuildingPlacer::builderStateMachine(){
 			if (b->unit->isIdle()){
 				if (Broodwar->self()->incompleteUnitCount(UnitTypes::Protoss_Pylon) < 1){
 					pylonIsInProgress = false;
-					b->buildTarget = getBuildTile(b->buildingProject, Broodwar->self()->getStartLocation());
-					b->state = 0;
+					//b->state = 1;
 				}
 			}
 		}
@@ -323,7 +290,6 @@ TilePosition BuildingPlacer::naturalExpantion(){
 		return buildTile;
 	}
 	else{
-
 		InformationManager::baseLocations.erase(InformationManager::baseLocations.begin() + erase_itr);
 		return buildTile;
 	}
@@ -344,7 +310,6 @@ TilePosition BuildingPlacer::expantion(){
 		if (Broodwar->canBuildHere(b->getTilePosition(), InformationManager::ourRace.getCenter(), false) && groundDist > 0 && groundDist < globalMinDist){
 			globalMinDist = groundDist;
 			buildTile = b->getTilePosition();
-
 		}
 	}
 	return buildTile;
