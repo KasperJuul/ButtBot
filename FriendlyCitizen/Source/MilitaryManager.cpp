@@ -61,9 +61,11 @@ void MilitaryManager::onFrame(){
 			noBuildingsorVisible = false;
 		}
 	}
+	std::string ourStrengthWriteout = "Our Strength: " + std::to_string(ourStrength);
+	std::string theirStrengthWriteout = "Their Strength: " + std::to_string(theirStrength);
 
-	BWAPI::Broodwar->drawTextScreen(100, 30, std::to_string(ourStrength).c_str());
-	BWAPI::Broodwar->drawTextScreen(100, 40, std::to_string(theirStrength).c_str());
+	BWAPI::Broodwar->drawTextScreen(100, 40, ourStrengthWriteout.c_str());
+	BWAPI::Broodwar->drawTextScreen(100, 50, theirStrengthWriteout.c_str());
 
 	if (noBuildingsorVisible && mainState!=MainStates::Intel){
 		mainState = MainStates::Intel;
