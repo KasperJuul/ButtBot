@@ -1,5 +1,28 @@
 #include "MiliHTN.h"
 
+void MiliHTN::kiteAttack(BWAPI::Unit kiter, BWAPI::Unit target){
+	if (!attack(kiter,target)){
+	/*BWAPI::UnitCommand currentCommand(kiter->getLastCommand());
+	Broodwar << std::to_string(kiter->getLastCommandFrame() < BWAPI::Broodwar->getFrameCount()) <<
+	//std::to_string(currentCommand.getType() != BWAPI::UnitCommandTypes::Attack_Unit) <<
+	//std::to_string(currentCommand.getTarget() != target) <<
+	std::to_string(!kiter->isAttackFrame()) <<
+	std::to_string(!kiter->isStartingAttack()) <<
+	std::endl;*/
+		if (kiter->getLastCommandFrame() < BWAPI::Broodwar->getFrameCount() &&
+			//currentCommand.getType() != BWAPI::UnitCommandTypes::Attack_Unit &&
+			//currentCommand.getTarget() != target &&
+			!kiter->isAttackFrame() &&
+			!kiter->isStartingAttack()){//Inspired by Ualbertabot's smart attack
+			
+			if (kiter->getGroundWeaponCooldown() > 0 || kiter->getAirWeaponCooldown() > 0){//homemade
+				kiter->move( kiter->getPosition() * 2 - target->getPosition()); // Inspired by Ualbertabot
+			}
+		}
+	}
+	//move(unit, unit->getPosition() * 2 - target->getPosition()) // Inspired by Ualbertabot
+}
+
 void MiliHTN::invade(MilitaryUnit invader, std::set<BWAPI::Unit> targets, std::vector<EnemyUnit> targetBuildings){
 	if (invader.unit->isAttackFrame() || invader.unit->isStartingAttack()){//Inspired by Ualbertabot's smart attack
 		return;
@@ -8,12 +31,17 @@ void MiliHTN::invade(MilitaryUnit invader, std::set<BWAPI::Unit> targets, std::v
 	BWAPI::Unit nearest;
 	double distance = DBL_MAX;
 	bool targetExists = false;;
-	for (auto u : targets){
+	/*for (auto u : targets){
 		if (u->getPosition().getDistance(invader.unit->getPosition()) < distance){
-			distance = u->getPosition().getDistance(invader.unit->getPosition());
-			nearest = u;
+			//distance = u->getPosition().getDistance(invader.unit->getPosition());
+			//nearest = u;
 			targetExists = true;
 		}
+	}*/
+	nearest = chooseTarget(invader.unit, targets);
+	
+	if (nearest != NULL){
+		targetExists = true;
 	}
 
 	if (!targetExists){
@@ -24,8 +52,28 @@ void MiliHTN::invade(MilitaryUnit invader, std::set<BWAPI::Unit> targets, std::v
 		}
 	}
 	else {
+		int enemyRange = 0;
+		int allyRange = 0;
+		if (invader.unit->getType().isFlyer()){
+			enemyRange = nearest->getType().airWeapon().maxRange();
+		}
+		else {
+			enemyRange = nearest->getType().groundWeapon().maxRange();
+		}
 
-		MiliHTN::attack(invader.unit, nearest);
+		if (nearest->getType().isFlyer()){
+			allyRange = invader.unit->getType().airWeapon().maxRange();
+		}
+		else {
+			allyRange = invader.unit->getType().groundWeapon().maxRange();
+		}
+
+		if (nearest->getType().topSpeed() <= invader.unit->getType().topSpeed() && allyRange > enemyRange){
+			MiliHTN::kiteAttack(invader.unit, nearest);
+		}
+		else {
+			MiliHTN::attack(invader.unit, nearest);
+		}
 	}
 
 	if (invader.unit->isIdle()){
@@ -42,17 +90,44 @@ void MiliHTN::defend(MilitaryUnit defender, std::set<BWAPI::Unit> targets){
 	BWAPI::Unit nearest;
 	int distance = INT_MAX;
 	bool targetExists = false;;
-	for (auto u : targets){
+	/*for (auto u : targets){
 		if (u->getPosition().getDistance(defender.unit->getPosition()) < distance){
 			distance = u->getPosition().getDistance(defender.unit->getPosition());
 			nearest = u;
 			targetExists = true;
 		}
+	}*/
+
+
+	nearest = chooseTarget(defender.unit, targets);
+	if (nearest != NULL){
+		targetExists = true;
 	}
 
 	if (targetExists){
-		
-			MiliHTN::attack(defender.unit,nearest);
+		int enemyRange = 0;
+		int allyRange = 0;
+		if (defender.unit->getType().isFlyer()){
+			enemyRange = nearest->getType().airWeapon().maxRange();
+		}
+		else {
+			enemyRange = nearest->getType().groundWeapon().maxRange();
+		}
+
+		if (nearest->getType().isFlyer()){
+			allyRange = defender.unit->getType().airWeapon().maxRange();
+		}
+		else {
+			allyRange = defender.unit->getType().groundWeapon().maxRange();
+		}
+
+		if (nearest->getType().topSpeed() <= defender.unit->getType().topSpeed() && allyRange > enemyRange){
+			MiliHTN::kiteAttack(defender.unit, nearest);
+		}
+		else {
+			MiliHTN::attack(defender.unit, nearest);
+
+		}
 		
 	}
 	else {
@@ -71,8 +146,42 @@ void MiliHTN::defend(MilitaryUnit defender, std::set<BWAPI::Unit> targets){
 }
 
 //Medium abstraction
-BWAPI::Unit chooseTarget(BWAPI::Unit attacker, std::vector<BWAPI::Unit> targets){
-	//Make heuristics!
+BWAPI::Unit MiliHTN::chooseTarget(BWAPI::Unit attacker, std::set<BWAPI::Unit> targets){
+	double min = DBL_MAX;
+	BWAPI::Unit bestTarget;
+	for (auto u : targets){
+		
+		if (u->getType().isFlyer() && attacker->getType().airWeapon().damageAmount() < 1){
+			continue;
+		}
+		if (!u->getType().isFlyer() && attacker->getType().groundWeapon().damageAmount() < 1){
+			continue;
+		}
+		if (u->isCloaked()){
+			bool detector = false;
+			for (auto ally : Broodwar->getUnitsInRadius(u->getPosition(),384,BWAPI::Filter::IsAlly)){
+				if (!ally->getType().isDetector()){
+					detector = true;
+					break;
+				}
+			}
+			if (!detector){
+				continue;
+			}
+		}
+
+		double damage = u->getType().groundWeapon().damageAmount() + u->getType().airWeapon().damageAmount();
+		double val = u->getDistance(attacker)/damage - damage / (double)(u->getHitPoints() + u->getShields());
+		if (val < min){
+			min = val;
+			bestTarget = u;
+		}
+	}
+
+	if (min == DBL_MAX){
+		return NULL;
+	}
+	return bestTarget;
 }
 
 //Low abstraction
@@ -89,13 +198,7 @@ bool MiliHTN::attack(BWAPI::Unit attacker, BWAPI::Unit target){
 		currentCommand.getTarget() != target &&
 		!attacker->isAttackFrame() &&
 		!attacker->isStartingAttack()){//Inspired by Ualbertabot's smart attack
-		if (!attacker->attack(target)){
-		}
-		else {
-			//Broodwar << "LOOOOOOL" << std::endl;
-		}
-	}
-	else {
+		return attacker->attack(target);
 		
 	}
 

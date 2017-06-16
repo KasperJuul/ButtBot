@@ -63,6 +63,9 @@ void MilitaryManager::onFrame(){
 
 	bool noBuildingsorVisible = true;
 	for (auto eu : InformationManager::enemyUnits){
+		if (eu.selfType.isBuilding() || eu.visible){
+			noBuildingsorVisible = false;
+		}
 		if (eu.selfType.groundWeapon().damageAmount() < 1 && eu.selfType.airWeapon().damageAmount() < 1){
 			continue;
 		}
@@ -75,9 +78,6 @@ void MilitaryManager::onFrame(){
 		float temp = BuildingPlanner::combatValue(eu.selfType) + BuildingPlanner::specialValue(eu.selfType);
 		if (temp > 0){
 			theirStrength += temp;
-		}
-		if (eu.selfType.isBuilding() || eu.visible){
-			noBuildingsorVisible = false;
 		}
 	}
 	std::string ourStrengthWriteout = "Our Strength: " + std::to_string(ourStrength);
