@@ -86,7 +86,7 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 	supplier.priority = econValue(InformationManager::ourRace.getSupplyProvider());
 	supplier.unitType = InformationManager::ourRace.getSupplyProvider();
 	supplier.declaration = TypeDec::UnitDec;
-	if (supplier.priority > 50){
+	if (supplier.priority > 50 && Broodwar->self()->supplyTotal() != 400){
 		finalOrder.push_back(supplier);
 	}
 	//Higher value comes before lower value. If tied, mili>econ>tech. This is not ensured by the structure below, but by the += 0.02~ above.
