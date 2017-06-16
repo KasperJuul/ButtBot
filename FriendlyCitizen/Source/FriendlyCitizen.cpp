@@ -55,7 +55,7 @@ void FriendlyCitizen::onStart()
 		analyzed = false;
 		analysis_just_finished = false;
 	}
-	Broodwar->setLocalSpeed(5);
+	Broodwar->setLocalSpeed(41);
 
 
 	//Broodwar->sendText("show me the money");

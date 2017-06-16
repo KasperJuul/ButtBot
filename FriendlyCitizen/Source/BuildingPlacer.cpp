@@ -172,7 +172,7 @@ void BuildingPlacer::builderStateMachine(){
 			}
 			break;
 		case 1:	// Wait for it......
-			//if (!pylonIsInProgress  && Broodwar->self()->incompleteUnitCount(InformationManager::ourRace.getSupplyProvider()) < 1){
+			if (!pylonIsInProgress  && Broodwar->self()->incompleteUnitCount(InformationManager::ourRace.getSupplyProvider()) < 1){
 				// Register an event that draws the target build location
 				Broodwar->registerEvent([tile, unitype](Game*)
 				{
@@ -187,7 +187,7 @@ void BuildingPlacer::builderStateMachine(){
 				b->unit->move((Position)tile);
 				Broodwar << "worker " << std::to_string(b->unit->getID()) << " is going to build " << unitype.toString() << std::endl;
 				b->state = 2;
-			//}
+			}
 
 			break;
 		case 2:	// Moving to build 
@@ -222,6 +222,9 @@ void BuildingPlacer::builderStateMachine(){
 			else if (InformationManager::ourRace == Races::Zerg && !b->unit->exists()){
 				releaseBuilder(b);
 			}
+			else if (Broodwar->self()->incompleteUnitCount(b->buildingProject) == 1 && InformationManager::ourRace == Races::Terran){
+				b->state = 6;
+			}
 			break;
 		case 4:
 			if (b->unit->isIdle()){
@@ -235,6 +238,10 @@ void BuildingPlacer::builderStateMachine(){
 			if (Broodwar->self()->incompleteUnitCount(UnitTypes::Protoss_Pylon) < 1){
 				b->buildTarget = getBuildTile(b->buildingProject, Broodwar->self()->getStartLocation());
 				b->state = 0;
+			}
+		case 6: // Terran building state
+			if (b->unit->isIdle() || b->unit->isGatheringGas()){
+				releaseBuilder(b);
 			}
 		}
 
