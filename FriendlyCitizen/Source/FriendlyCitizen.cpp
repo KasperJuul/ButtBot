@@ -64,9 +64,9 @@ void FriendlyCitizen::onStart()
 	//Broodwar->sendText("black sheep wall");
 	//Broodwar->sendText("whats mine is mine");
 	//Broodwar->sendText("whats mine is mine");
-	Broodwar->sendText("power overwhelming");
+	//Broodwar->sendText("power overwhelming");
 	//Broodwar->sendText("food for thought");
-	Broodwar->sendText("staying alive");
+	//Broodwar->sendText("staying alive");
 	//Broodwar->sendText("modify the phase variance");
 
 	InformationManager::regionSetup();
