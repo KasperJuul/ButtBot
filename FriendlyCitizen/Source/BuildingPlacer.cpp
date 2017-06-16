@@ -43,7 +43,13 @@ void BuildingPlacer::onFrame(){
 
 		bool canAfford = build.unitType.mineralPrice() <= (Broodwar->self()->minerals() - InformationManager::reservedMinerals)
 						 && build.unitType.gasPrice() <= (Broodwar->self()->gas() - InformationManager::reservedGas);
+
+		bool canAffordM = build.unitType.mineralPrice() <= (Broodwar->self()->minerals() - InformationManager::reservedMinerals);
 		
+		if (!canAfford && canAffordM){
+			continue;
+		}
+
 		if (canAfford){
 			if (build.unitType.isAddon()){
 				for (auto &u : Broodwar->self()->getUnits()){
@@ -246,13 +252,14 @@ TilePosition BuildingPlacer::getBuildTile(UnitType buildingType, TilePosition ar
 	
 	// Refinery, Assimilator, Extractor
 	if (buildingType.isRefinery()) {
-		for (const auto& geyser : BWTA::getStartLocation(Broodwar->self())->getGeysers()) {
-			TilePosition p1 = geyser->getInitialTilePosition();
-			if (geyser->exists()){
-				return p1;
-			}
-		}
-		Broodwar << "couldnt find a geyser" << std::endl;
+		return Broodwar->getBuildLocation(InformationManager::ourRace.getRefinery(), InformationManager::firstCenter->getTilePosition());
+		//for (const auto& geyser : BWTA::getStartLocation(Broodwar->self())->getGeysers()) {
+		//	TilePosition p1 = geyser->getInitialTilePosition();
+		//	if (geyser->exists()){
+		//		return p1;
+		//	}
+		//}
+		//Broodwar << "couldnt find a geyser" << std::endl;
 	}
 	if (buildingType.isResourceDepot()){
 		return expantion();
@@ -266,7 +273,6 @@ TilePosition BuildingPlacer::getBuildTile(UnitType buildingType, TilePosition ar
 					// units that are blocking the tile
 					bool unitsInWay = false;
 					for (Unit u : Broodwar->getAllUnits()) {
-						//if (u->getID() == builder->getID()) { continue; }
 						if ((std::abs(u->getTilePosition().x - i) < 4) && (std::abs(u->getTilePosition().y - j) < 4)) { unitsInWay = true; }
 					}
 					if (!unitsInWay) {

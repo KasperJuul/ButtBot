@@ -50,7 +50,6 @@ void FriendlyCitizen::onStart()
 		InformationManager::StartAnalysis();//MUST be first!
 		ResourceManager::onStart();
 		IntelManager::onStart();
-		IntelManager::hireScout();
 		//IntelManager::StartScouting();
 
 		analyzed = false;
@@ -182,14 +181,17 @@ void FriendlyCitizen::onFrame()
 	if (Broodwar->getFrameCount() % Broodwar->getLatencyFrames() != 0)
 		return;
 	
+	//if (InformationManager::workerUnits.size() > 6 && !InformationManager::scout_enable){
+	//	InformationManager::scout_enable = true;
+	//}
 
 	//Onframe functionality.
-
-
-
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
-	IntelManager::onFrame();
+	if (InformationManager::workerUnits.size() > 6){
+		IntelManager::onFrame();
+	}
+	
 	MilitaryManager::onFrame();
 
 }

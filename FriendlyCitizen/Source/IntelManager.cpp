@@ -23,8 +23,10 @@ void IntelManager::hireScout(){
 					scout->returningCargo = false;
 					scout->isScout = true;
 					scout->state = 0;
+					break;
 				}
 			}
+			break;
 		}
 	}
 }
@@ -103,7 +105,7 @@ void IntelManager::onFrame(){
 		break;
 	case 4:		// Circle the region to kite enemy units
 		itr = itr % (enemyRegionCircle.size() - 1);
-		if (scout->unit->getDistance(enemyRegionCircle.at(itr)) < 160 || !scout->unit->isMoving()){
+		if (scout->unit->getDistance(enemyRegionCircle.at(itr)) < 420 || !scout->unit->isMoving()){
 			itr++;
 			itr = itr % (enemyRegionCircle.size() - 1);
 			scout->unit->move(enemyRegionCircle.at(itr));

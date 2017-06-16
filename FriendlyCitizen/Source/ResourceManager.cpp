@@ -62,7 +62,6 @@ void ResourceManager::stdGather(){
 	for (auto w : InformationManager::workerUnits){
 		if (!w->unit->isConstructing() && !w->unit->isGatheringMinerals()){
 			w->unit->gather(w->unit->getClosestUnit(IsMineralField || IsRefinery));
-			//w->state = UnitState::WORKING;
 		}
 	}
 }
@@ -76,7 +75,7 @@ void ResourceManager::gasGather(){
 				gasworkers++;
 			}
 			else if (gasworkers < 3){
-				if (!w->builder){
+				if (!w->builder && !w->isScout){
 					if (w->inQ){
 						for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
 							if (w->mineral->workers.at(i) = w->unit){
