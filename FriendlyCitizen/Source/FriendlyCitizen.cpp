@@ -134,7 +134,13 @@ void FriendlyCitizen::onEnd(bool isWinner)
 		debug.push_back("Section owned by " + std::to_string(r.owner) + " at " + std::to_string(r.self->getCenter().x) + "," + std::to_string(r.self->getCenter().y));
 	}
 
+	std::vector<std::string> combatTest;
+	for (auto u : InformationManager::ourTech){
+		combatTest.push_back(u.selfType.getName() + " " + std::to_string(BuildingPlanner::combatValue(u.selfType)));
+	}
+
 	Debug::writeLog(debug, "regiondebug", "test");
+	Debug::writeLog(combatTest, "heuristicdebug", "test");
 
 	Debug::errorLogMessages("End Of Match");
 	Debug::endWriteLog();//New testing system!

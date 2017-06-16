@@ -84,7 +84,9 @@ void Debug::screenInfo(){
 	std::string workers = "Workers: " + std::to_string(InformationManager::workerUnits.size());
 	
 	std::string builders = "";
-	
+
+	BWAPI::Broodwar->drawTextScreen(100, 60, std::to_string(MilitaryManager::mainState).c_str());
+
 	int length = 0;
 	for (auto b : BuildingPlacer::builders){
 		if (length < 5){
