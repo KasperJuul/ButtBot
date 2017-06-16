@@ -370,9 +370,12 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 					InformationManager::workerUnits.push_back(temp);
 				}
 				else{//Support and extractor gets put here for some reason.
-					MilitaryUnit* temp = new MilitaryUnit();
-					temp->unit = unit;
-					InformationManager::militaryUnits.push_back(temp);
+					if (temp->unit->getType() != BWAPI::UnitTypes::Zerg_Overlord){
+						MilitaryUnit* temp = new MilitaryUnit();
+						temp->unit = unit;
+						InformationManager::militaryUnits.push_back(temp);
+						
+					}
 				}
 			}
 
