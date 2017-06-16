@@ -92,6 +92,7 @@ public:
 	static bool enemyFound;
 	static bool enemyBaseFound;
 	static bool initialScoutDestroyed;
+	static bool scout_enable;
 
 	//Information - Static
 	static Race ourRace;

@@ -29,6 +29,7 @@ int InformationManager::reservedGas;
 bool InformationManager::enemyFound;
 bool InformationManager::enemyBaseFound;
 bool InformationManager::initialScoutDestroyed;
+bool InformationManager::scout_enable = false;
 std::vector<TechNode> InformationManager::ourTech;
 Race InformationManager::theirRace;
 std::vector<TechNode> InformationManager::theirTech;
