@@ -81,7 +81,6 @@ void Debug::screenInfo(){
 		}
 	}
 
-	std::string centers = "Centers: " + std::to_string(InformationManager::centers.size());
 	std::string workers = "Workers: " + std::to_string(InformationManager::workerUnits.size());
 	
 	std::string builders = "";
@@ -109,7 +108,6 @@ void Debug::screenInfo(){
 		length++;
 	}
 
-	Broodwar->drawTextScreen(20, 0, centers.c_str());
 	Broodwar->drawTextScreen(20, 10, workers.c_str());
 
 	Broodwar->drawTextScreen(20, 20, builders.c_str());

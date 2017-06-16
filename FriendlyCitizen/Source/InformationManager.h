@@ -69,12 +69,6 @@ struct workerUnit{
 	std::string status;		// Idle, Mining, Returning Cargo, Waiting,
 };
 
-struct Center{
-	BWAPI::Unit unit;
-	std::vector<workerUnit> wrkUnits;
-	std::vector<Unit> barracks;
-};
-
 inline bool operator<(const UnitStatus& lhs, const UnitStatus& rhs)
 {
 	return lhs.self->getID() < rhs.self->getID();
@@ -130,7 +124,6 @@ public:
 	static std::vector<BWTA::BaseLocation*> baseLocations;
 	static BWTA::BaseLocation* mainBase;
 	static std::vector<workerUnit> wrkUnits;
-	static std::vector<Center> centers; 
 	static std::vector<UnitType> orderedBuildings;
 
 	//######################### REFACTOR #########################################

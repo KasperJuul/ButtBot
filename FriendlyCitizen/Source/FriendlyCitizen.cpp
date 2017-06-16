@@ -56,7 +56,7 @@ void FriendlyCitizen::onStart()
 		analyzed = false;
 		analysis_just_finished = false;
 	}
-	Broodwar->setLocalSpeed(10);
+	Broodwar->setLocalSpeed(5);
 
 
 	//Broodwar->sendText("show me the money");
@@ -64,8 +64,9 @@ void FriendlyCitizen::onStart()
 	//Broodwar->sendText("black sheep wall");
 	//Broodwar->sendText("whats mine is mine");
 	//Broodwar->sendText("whats mine is mine");
-	//Broodwar->sendText("power overwhelming");
+	Broodwar->sendText("power overwhelming");
 	//Broodwar->sendText("food for thought");
+	Broodwar->sendText("staying alive");
 	//Broodwar->sendText("modify the phase variance");
 
 	InformationManager::regionSetup();
@@ -352,21 +353,6 @@ void FriendlyCitizen::onUnitMorph(BWAPI::Unit unit)
 		if (unit->getType().isBuilding()){
 			InformationManager::reservedMinerals -= unit->getType().mineralPrice();
 			InformationManager::reservedGas -= unit->getType().gasPrice();
-			bool found = false;
-			for (auto &c : InformationManager::centers){
-				int itr = 0;
-				for (auto &w : c.wrkUnits){
-					if (unit == w.unit){
-						c.wrkUnits.erase(c.wrkUnits.begin() + itr);
-						found = true;
-						break;
-					}
-					itr++;
-				}
-				if (found){
-					break;
-				}
-			}
 		}
 		Broodwar << "unit " << std::to_string(unit->getID()) << " has morphed into " << unit->getType().toString() << std::endl;
 	}
@@ -400,19 +386,7 @@ void FriendlyCitizen::onUnitComplete(BWAPI::Unit unit)
 	InformationManager::OnNewUnit(unit);
 	if (unit->getPlayer() == Broodwar->self()){
 		if (unit->getType().isResourceDepot()){
-			
-			Center temp;
-			temp.unit = unit;
-			temp.wrkUnits.clear();
-			bool already_exists = false;
-			for (auto &c : InformationManager::centers){
-				if (c.unit == unit)
-					already_exists = true;
-			}
-			if (!already_exists){
-				InformationManager::centers.push_back(temp);
-			}
-			BuildingPlacer::xpandIsBeingBuild = false;
+			//ResourceManager::addMinPatches(unit);
 		}
 
 		if (unit->getType() == Broodwar->self()->getRace().getSupplyProvider()){

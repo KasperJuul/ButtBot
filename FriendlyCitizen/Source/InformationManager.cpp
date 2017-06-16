@@ -21,7 +21,6 @@ Unit InformationManager::firstCenter; //Swap out with better, generalized functi
 std::vector<Unit> InformationManager::firstWorkers; //Swap out with better, generalized functionality later
 BWTA::BaseLocation* InformationManager::mainBase;
 std::vector<workerUnit> InformationManager::wrkUnits;
-std::vector<Center> InformationManager::centers;
 std::vector<UnitType> InformationManager::orderedBuildings;
 std::vector<EnemyUnit> InformationManager::enemyUnits;
 
@@ -185,10 +184,6 @@ void InformationManager::StartAnalysis(){//Initializes informationmanager
 	for (auto &u : Broodwar->self()->getUnits()){//Early functionality to quickly get vital data for other sections of the code
 		if (InformationManager::ourRace.getCenter() == u->getType()){
 			InformationManager::firstCenter = u;
-			Center temp;
-			temp.unit = u;
-			temp.wrkUnits.clear();
-			centers.push_back(temp);
 		}
 		else if (InformationManager::ourRace.getWorker() == u->getType()){
 			InformationManager::firstWorkers.push_back(u);
@@ -365,7 +360,6 @@ void InformationManager::OnNewUnit(Unit unit){//Should only be called by Friendl
 				if (unit->getType().isWorker()){//Workers!
 					WorkerUnit* temp = new WorkerUnit();
 					temp->unit = unit;
-					temp->center = unit->getClosestUnit(Filter::IsResourceDepot);
 					temp->unitState = UnitState::FREE;
 					InformationManager::workerUnits.push_back(temp);
 				}

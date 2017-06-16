@@ -45,7 +45,17 @@ void BuildingPlacer::onFrame(){
 						 && build.unitType.gasPrice() <= (Broodwar->self()->gas() - InformationManager::reservedGas);
 		
 		if (canAfford){
-			if (build.unitType.isBuilding()){
+			if (build.unitType.isAddon()){
+				for (auto &u : Broodwar->self()->getUnits()){
+					if (u->canBuildAddon(build.unitType) && u->isIdle()){
+						if (Broodwar->self()->supplyTotal() - Broodwar->self()->supplyUsed() - build.unitType.supplyRequired() >= 0){
+							u->buildAddon(build.unitType);
+						}
+						break;
+					}
+				}
+			}
+			else if (build.unitType.isBuilding()){
 				bool ip = false;
 				for (auto bu : builders){
 					if (bu->buildingProject == build.unitType){
@@ -68,14 +78,11 @@ void BuildingPlacer::onFrame(){
 							if (canAfford2){
 								hireBuilder(Broodwar->self()->getRace().getSupplyProvider());
 							}
-							
 						}
-						
 						break;
 					}
 				}
 			}
-			
 		}
 		else{ break; }
 	}
@@ -100,6 +107,7 @@ void BuildingPlacer::hireBuilder(UnitType ut){
 			w->buildingProject = ut;
 			w->contract = true;
 			builders.insert(w);
+			Broodwar << "Builder " << std::to_string(w->unit->getID()) << " is hired to build" << w->buildingProject.toString() << std::endl;
 			break;
 		}
 	}
@@ -139,13 +147,16 @@ void BuildingPlacer::builderStateMachine(){
 					pylonIsInProgress = true;
 					b->state = 4;
 				}
+				else if (InformationManager::ourRace == Races::Protoss && pylonIsInProgress){
+					b->state = 5;  // SPECIAL CASE FOR PROTOSS
+				}
 			}
 			else{
 				b->state = 1;
 			}
 			break;
 		case 1:	// Wait for it......
-			if (!pylonIsInProgress  && Broodwar->self()->incompleteUnitCount(UnitTypes::Protoss_Pylon) < 1){
+			//if (!pylonIsInProgress  && Broodwar->self()->incompleteUnitCount(InformationManager::ourRace.getSupplyProvider()) < 1){
 				// Register an event that draws the target build location
 				Broodwar->registerEvent([tile, unitype](Game*)
 				{
@@ -160,7 +171,7 @@ void BuildingPlacer::builderStateMachine(){
 				b->unit->move((Position)tile);
 				Broodwar << "worker " << std::to_string(b->unit->getID()) << " is going to build " << unitype.toString() << std::endl;
 				b->state = 2;
-			}
+			//}
 
 			break;
 		case 2:	// Moving to build 
@@ -168,16 +179,25 @@ void BuildingPlacer::builderStateMachine(){
 				b->unit->build(b->buildingProject, b->buildTarget);
 				b->state = 3;
 			}
+			else if (b->unit->isIdle()){
+				b->unit->move((Position)b->buildTarget);
+			}
 			
 			break;
 		case 3:	// Building
 			if (b->unit->isIdle()){
 				if (Broodwar->self()->incompleteUnitCount(b->buildingProject) < 1){
 					Debug::errorLogMessages("Dave didn't do his job");
-					InformationManager::reservedMinerals -= b->buildingProject.mineralPrice();
-					InformationManager::reservedGas -= b->buildingProject.gasPrice();
-				}				
-				releaseBuilder(b);
+					//InformationManager::reservedMinerals -= b->buildingProject.mineralPrice();
+					//InformationManager::reservedGas -= b->buildingProject.gasPrice();
+					b->buildTarget = getBuildTile(b->buildingProject, b->unit->getTilePosition());
+					b->unit->move((Position)b->buildTarget);
+					b->state = 2;
+				}
+				else{
+					releaseBuilder(b);
+				}
+				
 			}
 			break;
 		case 4:
@@ -188,63 +208,15 @@ void BuildingPlacer::builderStateMachine(){
 					b->state = 0;
 				}
 			}
-		}
-	}
-
-}
-
-void BuildingPlacer::buildOrTrain(UnitType ut){
-	if (ut.isBuilding()){
-		bool inProgress = false;
-		for (auto &b : InformationManager::orderedBuildings){
-			if (ut == b){
-				inProgress = true;
+		case 5: // Protoss waiting state
+			if (Broodwar->self()->incompleteUnitCount(UnitTypes::Protoss_Pylon) < 1){
+				b->buildTarget = getBuildTile(b->buildingProject, Broodwar->self()->getStartLocation());
+				b->state = 0;
 			}
 		}
-		if (!inProgress){
-			for (auto myUnit : InformationManager::workerUnits) {
 
-				if (myUnit->unit != IntelManager::scout->unit && !myUnit->unit->isConstructing() && !myUnit->unit->isGatheringGas()) {
-					//Find a builtile
-					TilePosition buildTile = getBuildTile(ut, Broodwar->self()->getStartLocation());
-					//and, if found, send the worker to build it (and leave others alone - break;)
-					if (buildTile != TilePositions::None) {
-						// Register an event that draws the target build location
-						Broodwar->registerEvent([buildTile, ut](Game*)
-						{
-							Broodwar->drawBoxMap(Position(buildTile),
-								Position(buildTile + ut.tileSize()),
-								Colors::Green);
-						},
-							nullptr,  // condition
-							ut.buildTime() + 100);  // frames to run
-						InformationManager::reservedMinerals += ut.mineralPrice();
-						InformationManager::reservedGas += ut.gasPrice();
-						myUnit->unit->build(ut, buildTile);
-						InformationManager::orderedBuildings.push_back(ut);
-						Broodwar << "worker is building " << ut.toString() << std::endl;
-						break;
-					}
-					else{
-						//Broodwar << "Expantion BuildTile = none" << std::endl;
-						//if (InformationManager::ourRace == Races::Protoss && Broodwar->self()->completedUnitCount(UnitTypes::Protoss_Pylon) < 1){
-						//	buildOrTrain(UnitTypes::Protoss_Pylon);
-						//}
-						//break;
-					}
-				}
-			}
-		}
 	}
-	else{
-		for (auto &u : Broodwar->self()->getUnits()){//Tp be refactored with more dynamic code
-			if (u->canTrain(ut) && u->isIdle()){
-				u->train(ut);
-				//Broodwar << u->getType().toString() << " is building " << toBuild.toString() << std::endl;
-				break;
-			}
-		}
-	}
+
 }
 
 
@@ -269,11 +241,11 @@ TilePosition BuildingPlacer::getBuildTile(UnitType buildingType, TilePosition ar
 		return expantion();
 	}
 
-
 	while ((maxDist < stopDist) && (ret == TilePositions::None)) {
 		for (int i = aroundTile.x - maxDist; i <= aroundTile.x + maxDist; i++) {
 			for (int j = aroundTile.y - maxDist; j <= aroundTile.y + maxDist; j++) {
-				if (Broodwar->canBuildHere(TilePosition(i, j), buildingType, false)) {
+				if (Broodwar->canBuildHere(TilePosition(i, j), buildingType, false) 
+					&& (!(InformationManager::ourRace == Races::Terran) || Broodwar->canBuildHere(TilePosition(i+2, j), buildingType, false))) {
 					// units that are blocking the tile
 					bool unitsInWay = false;
 					for (Unit u : Broodwar->getAllUnits()) {
@@ -347,4 +319,61 @@ TilePosition BuildingPlacer::expantion(){
 		}
 	}
 	return buildTile;
+}
+
+
+
+//// OLD STUFF
+void BuildingPlacer::buildOrTrain(UnitType ut){
+	if (ut.isBuilding()){
+		bool inProgress = false;
+		for (auto &b : InformationManager::orderedBuildings){
+			if (ut == b){
+				inProgress = true;
+			}
+		}
+		if (!inProgress){
+			for (auto myUnit : InformationManager::workerUnits) {
+
+				if (myUnit->unit != IntelManager::scout->unit && !myUnit->unit->isConstructing() && !myUnit->unit->isGatheringGas()) {
+					//Find a builtile
+					TilePosition buildTile = getBuildTile(ut, Broodwar->self()->getStartLocation());
+					//and, if found, send the worker to build it (and leave others alone - break;)
+					if (buildTile != TilePositions::None) {
+						// Register an event that draws the target build location
+						Broodwar->registerEvent([buildTile, ut](Game*)
+						{
+							Broodwar->drawBoxMap(Position(buildTile),
+								Position(buildTile + ut.tileSize()),
+								Colors::Green);
+						},
+							nullptr,  // condition
+							ut.buildTime() + 100);  // frames to run
+						InformationManager::reservedMinerals += ut.mineralPrice();
+						InformationManager::reservedGas += ut.gasPrice();
+						myUnit->unit->build(ut, buildTile);
+						InformationManager::orderedBuildings.push_back(ut);
+						Broodwar << "worker is building " << ut.toString() << std::endl;
+						break;
+					}
+					else{
+						//Broodwar << "Expantion BuildTile = none" << std::endl;
+						//if (InformationManager::ourRace == Races::Protoss && Broodwar->self()->completedUnitCount(UnitTypes::Protoss_Pylon) < 1){
+						//	buildOrTrain(UnitTypes::Protoss_Pylon);
+						//}
+						//break;
+					}
+				}
+			}
+		}
+	}
+	else{
+		for (auto &u : Broodwar->self()->getUnits()){//Tp be refactored with more dynamic code
+			if (u->canTrain(ut) && u->isIdle()){
+				u->train(ut);
+				//Broodwar << u->getType().toString() << " is building " << toBuild.toString() << std::endl;
+				break;
+			}
+		}
+	}
 }
