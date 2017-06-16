@@ -44,21 +44,6 @@ void ResourceManager::findMinPatches(){
 	}
 }
 
-void ResourceManager::addMinPatches( Unit unit){
-	int itr = minPatches.size();
-	for (auto m : Broodwar->getMinerals()){
-		if (BWTA::getRegion(unit->getTilePosition())->getPolygon().isInside(m->getPosition())){
-			mineralPatch temp;
-			temp.unit = m;
-			temp.name = "M" + std::to_string(itr);
-			temp.workers.clear();
-			minPatches.push_back(temp);
-			itr++;
-		}
-	}
-}
-
-
 void ResourceManager::stdGather(){
 	for (auto w : InformationManager::workerUnits){
 		if (!w->unit->isConstructing() && !w->unit->isGatheringMinerals()){
@@ -87,9 +72,7 @@ void ResourceManager::gasGather(){
 						}
 					}
 					w->unit->gather(w->unit->getClosestUnit(IsRefinery));
-					w->state = 0;
 					w->gasworker = true;
-					w->returningCargo = false;
 					gasworkers++;
 				}
 				
@@ -101,7 +84,23 @@ void ResourceManager::gasGather(){
 
 void ResourceManager::qGather(){
 	for (auto w : InformationManager::workerUnits){
-
+		if (w->unit->isConstructing()){
+			if (w->inQ){
+				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
+					if (w->mineral->workers.at(i) = w->unit){
+						w->mineral->workers.erase(w->mineral->workers.begin() + i);
+						w->inQ = false;
+					}
+				}
+			}
+			if (w->unit->isCarryingMinerals()){
+				w->state = 3;
+			}
+			else{
+				w->state = 0;
+			}
+			continue;
+		}
 		if (w->gasworker || w->builder){
 			if (w->inQ){
 				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
@@ -238,19 +237,19 @@ int ResourceManager::roundTrip(Unit unit, mineralPatch m){
 
 ResourceManager::mineralPatch* ResourceManager::roundTrip_min(Unit unit, std::vector<ResourceManager::mineralPatch>* patches){
 	int time = 1000000;
-	int patchItr = 0;
+	int derp = 0;
 	int itr = 0;
 	for (auto m : *patches){
 		int tripTime = roundTrip(unit, m);
 		if (tripTime < time){
 			time = tripTime;
-			patchItr = itr;
+			derp = itr;
 			
 		}
 		itr++;
 	
 	}
-	return &patches->at(patchItr);
+	return &patches->at(derp);
 }
 
 ///////////////// OLD STUFF //////////////////////////////////////////
