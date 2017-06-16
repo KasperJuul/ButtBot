@@ -21,7 +21,8 @@ void BuildingPlacer::onFrame(){
 	static int lastChecked = 0;
 	bool wait = false;
 
-	UnitType toBuild = BuildingPlanner::makePlan();
+	//UnitType toBuild = BuildingPlanner::makePlan();
+	UnitType toBuild = UnitTypes::None;
 	if (InformationManager::reservedMinerals < 0){
 		InformationManager::reservedMinerals = 0;
 	}
@@ -175,12 +176,12 @@ void BuildingPlacer::createType(BWAPI::UnitType unit){
 	}
 	else{
 		Unit trainer;
-		for (auto &u : InformationManager::ourUnits){
+		/*for (auto &u : InformationManager::costumUnits){
 			if (u.self->canTrain(unit)){
 				trainer = u.self;
 				break;
 			}
-		}
+		}*/
 		if (trainer){
 			trainer->train(unit);
 		}

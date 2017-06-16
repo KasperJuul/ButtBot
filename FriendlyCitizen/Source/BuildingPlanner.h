@@ -39,9 +39,9 @@ public:
 	static float econValue(UnitType toAnalyze);
 	static float combatValue(TechNode toAnalyze);//Depcrecated
 	static float combatValue(UnitType toAnalyze);
-	static BWAPI::UnitType makePlan();
+	//static BWAPI::UnitType makePlan();
 	static std::vector<Priority> makePlanN();
 	static void plannerOnFrame();
-	static int heuristic(TechNode node);
+	//static int heuristic(TechNode node);
 	static std::string plan;
 };
