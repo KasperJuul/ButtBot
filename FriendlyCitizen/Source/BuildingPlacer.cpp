@@ -55,6 +55,16 @@ void BuildingPlacer::onFrame(){
 					}
 				}
 			}
+			else if (InformationManager::ourRace == Races::Zerg && build.unitType.whatBuilds().first.isBuilding()){
+				for (auto &u : Broodwar->self()->getUnits()){
+					if (u->canMorph(build.unitType) && u->isIdle()){
+						if (Broodwar->self()->supplyTotal() - Broodwar->self()->supplyUsed() - build.unitType.supplyRequired() >= 0){
+							u->morph(build.unitType);
+						}
+						break;
+					}
+				}
+			}
 			else if (build.unitType.isBuilding()){
 				bool ip = false;
 				for (auto bu : builders){
@@ -185,6 +195,7 @@ void BuildingPlacer::builderStateMachine(){
 			
 			break;
 		case 3:	// Building
+
 			if (b->unit->isIdle()){
 				if (Broodwar->self()->incompleteUnitCount(b->buildingProject) < 1){
 					Debug::errorLogMessages("Dave didn't do his job");
@@ -198,6 +209,12 @@ void BuildingPlacer::builderStateMachine(){
 					releaseBuilder(b);
 				}
 				
+			}
+			else if (InformationManager::ourRace == Races::Zerg && b->unit->isMorphing()){
+				releaseBuilder(b);
+			}
+			else if (InformationManager::ourRace == Races::Zerg && !b->unit->exists()){
+				releaseBuilder(b);
 			}
 			break;
 		case 4:

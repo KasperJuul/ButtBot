@@ -63,6 +63,11 @@ void Debug::screenInfo(){
 		Broodwar->drawTextMap(w->unit->getPosition() + Position(-5, -20), "%c%s", Text::Yellow, attacking.c_str());
 	}
 
+	for (auto bub : BuildingPlacer::builders){
+		//Broodwar->drawTextMap(w->unit->getPosition(), "%c%d", Text::Yellow, w->unit->getID());
+		Broodwar->drawTextMap(bub->unit->getPosition() + Position(0, -20), "%c%d", Text::Purple, bub->state);
+	}
+
 	for (auto &u : Broodwar->self()->getUnits()){
 		if (u->getType().isWorker()){
 			Broodwar->drawTextMap(u->getPosition(), "%c%d", Text::Yellow, u->getID());
