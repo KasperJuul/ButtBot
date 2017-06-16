@@ -132,16 +132,34 @@ void MiliHTN::defend(MilitaryUnit defender, std::set<BWAPI::Unit> targets){
 		
 	}
 	else {
-		int realPlacement = defender.placement;
-		if (defender.placement > MilitaryManager::allyRegions.size()){
-			realPlacement -= MilitaryManager::allyRegions.size();
-			BWAPI::Position pos = InformationManager::regions.at(MilitaryManager::disputedRegions.at(realPlacement)).self->getCenter();
-			defender.unit->move(pos);
+		std::set<BWAPI::Unit> targets2;
+		for (auto u : Broodwar->getUnitsInRadius(defender.unit->getPosition(), 1000, BWAPI::Filter::IsEnemy)){
+			if (u->getType() != UnitTypes::Zerg_Larva && u->getType().topSpeed() > defender.unit->getType().topSpeed()){
+				targets2.insert(u);
+			}
+		}
+		
+		BWAPI::Unit nearest = NULL;
+		if (!targets.empty()){
+			nearest = chooseTarget(defender.unit,targets2);
+		}
+
+		if (nearest != NULL){
+			MiliHTN::attack(defender.unit, nearest);
 		}
 		else {
-			BWAPI::Position pos = InformationManager::regions.at(MilitaryManager::allyRegions.at(realPlacement)).self->getCenter();
-			defender.unit->move(pos);
 
+			int realPlacement = defender.placement;
+			if (defender.placement > MilitaryManager::allyRegions.size()){
+				realPlacement -= MilitaryManager::allyRegions.size();
+				BWAPI::Position pos = InformationManager::regions.at(MilitaryManager::disputedRegions.at(realPlacement)).self->getCenter();
+				defender.unit->move(pos);
+			}
+			else {
+				BWAPI::Position pos = InformationManager::regions.at(MilitaryManager::allyRegions.at(realPlacement)).self->getCenter();
+				defender.unit->move(pos);
+
+			}
 		}
 	}
 }

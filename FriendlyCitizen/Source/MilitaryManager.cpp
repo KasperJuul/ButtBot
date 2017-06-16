@@ -55,7 +55,7 @@ void MilitaryManager::onFrame(){
 			continue;
 		}
 
-		float temp = BuildingPlanner::combatValue(ou->unit->getType()) + BuildingPlanner::specialValue(ou->unit->getType());//TODO: make custom heuristic for military
+		float temp = BuildingPlanner::combatValue(ou->unit->getType())/BuildingPlanner::maxCombat*100 + BuildingPlanner::specialValue(ou->unit->getType());//TODO: make custom heuristic for military
 		if (temp > 0){
 			ourStrength += temp;
 		}
@@ -75,7 +75,7 @@ void MilitaryManager::onFrame(){
 		if (eu.selfType == Broodwar->enemy()->getRace().getWorker()){
 			continue;
 		}
-		float temp = BuildingPlanner::combatValue(eu.selfType) + BuildingPlanner::specialValue(eu.selfType);
+		float temp = BuildingPlanner::combatValue(eu.selfType)/BuildingPlanner::maxCombatEnemy*100 + BuildingPlanner::specialValue(eu.selfType);
 		if (temp > 0){
 			theirStrength += temp;
 		}
@@ -102,7 +102,7 @@ void MilitaryManager::onFrame(){
 	switch (mainState){
 	case MainStates::Defensive:
 	{
-								  if (theirStrength*1.5 < ourStrength){
+								  if (theirStrength*1.4 < ourStrength){
 									  mainState = MainStates::Offensive; 
 									  for (int i = 0; i < InformationManager::militaryUnits.size(); i++){//Deassign
 										  InformationManager::militaryUnits.at(i)->placement = -1;
@@ -148,7 +148,7 @@ void MilitaryManager::onFrame(){
 
 	case MainStates::Offensive:
 	{
-								  if (theirStrength*1.1 > ourStrength){
+								  if (theirStrength*0.8 > ourStrength){
 									  mainState = MainStates::Defensive;
 									  break;
 								  }
