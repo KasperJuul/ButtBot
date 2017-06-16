@@ -13,6 +13,27 @@ std::vector<int> MilitaryManager::enemyRegions;
 std::vector<int> MilitaryManager::disputedRegions;
 std::vector<int> MilitaryManager::allyRegions;
 
+void enemyAnalyze(){
+	BuildingPlanner::enemyStealth = SpecialReq::NotNeeded;
+	for (auto eu : InformationManager::enemyUnits){
+		if (eu.selfType.isCloakable() || eu.selfType.hasPermanentCloak()){
+			bool detector = false;
+			for (auto u : Broodwar->self()->getUnits()){
+				if (u->getType().isDetector()){
+					detector = true;
+					break;
+				}
+			}
+			if (detector){
+				BuildingPlanner::enemyStealth = SpecialReq::Satiated;
+			}
+			else if(BuildingPlanner::enemyStealth == SpecialReq::NotNeeded) {//Don't undo satiated
+				BuildingPlanner::enemyStealth = SpecialReq::Needed;
+			}
+		}
+	}
+}
+
 void MilitaryManager::regionUpdate(){
 	MilitaryManager::allyRegions.clear();
 	MilitaryManager::disputedRegions.clear();

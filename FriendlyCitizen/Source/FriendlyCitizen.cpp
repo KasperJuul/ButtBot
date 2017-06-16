@@ -268,7 +268,7 @@ void FriendlyCitizen::onUnitEvade(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitShow(BWAPI::Unit unit)
 {
-	if (unit->getPlayer() != Broodwar->self()){
+	if (unit->getPlayer() == Broodwar->enemy()){
 		if (!firstEncounter){
 			InformationManager::firstEncounter(unit->getPlayer()->getRace());
 			firstEncounter = true;

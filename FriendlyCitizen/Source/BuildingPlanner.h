@@ -32,6 +32,7 @@ class BuildingPlanner{
 public:
 	static float maxCombat;
 	static float maxCombatEnemy;
+	static SpecialReq enemyStealth;
 	static BWAPI::UnitType chooseBetweenMilitary(std::vector<TechNode> selection);
 	static std::vector<float> techValue(std::vector<int> possibleNodes, std::vector<int> futureNodes, std::vector<float> totalValue);
 	static std::vector<Priority> order(std::vector<Priority> military, std::vector<Priority> economy, Priority technology);

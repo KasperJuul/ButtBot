@@ -7,6 +7,7 @@
 
 std::string BuildingPlanner::plan;
 
+SpecialReq BuildingPlanner::enemyStealth = SpecialReq::NotNeeded;
 float BuildingPlanner::econ = 0;
 float BuildingPlanner::mili = 0;
 float BuildingPlanner::tech = 0;
@@ -532,7 +533,15 @@ float BuildingPlanner::specialValue(UnitType toAnalyze){//TODO: Implement Not Ne
 			val += 25;
 		}
 		if (toAnalyze.isDetector()){
-			val += 25;
+			if (enemyStealth == SpecialReq::NotNeeded){
+				val += 10;
+			}
+			else if (enemyStealth == SpecialReq::Needed){
+				val += 500;
+			}
+			else {
+				val += 25;
+			}
 		}
 		if (toAnalyze.groundWeapon() != BWAPI::WeaponTypes::None){//If can attack ground!
 			if (toAnalyze.groundWeapon().maxRange() / 32 >= 6){
