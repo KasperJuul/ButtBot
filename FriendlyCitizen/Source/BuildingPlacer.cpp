@@ -164,7 +164,6 @@ void BuildingPlacer::builderStateMachine(){
 
 			break;
 		case 2:	// Moving to build 
-			
 			if (b->unit->getDistance((Position)b->buildTarget) < Broodwar->self()->getRace().getWorker().sightRange()-20){
 				b->unit->build(b->buildingProject, b->buildTarget);
 				b->state = 3;

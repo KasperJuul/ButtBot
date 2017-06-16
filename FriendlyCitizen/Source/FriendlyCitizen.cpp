@@ -56,14 +56,14 @@ void FriendlyCitizen::onStart()
 		analyzed = false;
 		analysis_just_finished = false;
 	}
-	Broodwar->setLocalSpeed(41);
+	Broodwar->setLocalSpeed(10);
 
 
 	//Broodwar->sendText("show me the money");
 	//Broodwar->sendText("operation cwal");
 	//Broodwar->sendText("black sheep wall");
-	Broodwar->sendText("whats mine is mine");
-	Broodwar->sendText("whats mine is mine");
+	//Broodwar->sendText("whats mine is mine");
+	//Broodwar->sendText("whats mine is mine");
 	//Broodwar->sendText("power overwhelming");
 	//Broodwar->sendText("food for thought");
 	//Broodwar->sendText("modify the phase variance");
@@ -143,7 +143,7 @@ void FriendlyCitizen::onFrame()
 {
 	// Display the game frame rate as text in the upper left area of the screen
 	Broodwar->drawTextScreen(200, 0, "FPS: %d", Broodwar->getFPS());
-	Broodwar->drawTextScreen(200, 20, "Average FPS: %f", Broodwar->getAverageFPS());
+	Broodwar->drawTextScreen(200, 10, "Average FPS: %f", Broodwar->getAverageFPS());
 
 	if (dbg_mode){
 		Debug::screenInfo();
@@ -183,7 +183,7 @@ void FriendlyCitizen::onFrame()
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
 	IntelManager::onFrame();
-	//MilitaryManager::onFrame();
+	MilitaryManager::onFrame();
 
 }
 
