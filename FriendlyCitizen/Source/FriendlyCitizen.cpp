@@ -62,8 +62,8 @@ void FriendlyCitizen::onStart()
 	//Broodwar->sendText("show me the money");
 	//Broodwar->sendText("operation cwal");
 	//Broodwar->sendText("black sheep wall");
-	Broodwar->sendText("whats mine is mine");
-	Broodwar->sendText("whats mine is mine");
+	//Broodwar->sendText("whats mine is mine");
+	//Broodwar->sendText("whats mine is mine");
 	//Broodwar->sendText("power overwhelming");
 	//Broodwar->sendText("food for thought");
 	//Broodwar->sendText("modify the phase variance");
@@ -183,7 +183,7 @@ void FriendlyCitizen::onFrame()
 	BuildingPlacer::onFrame();
 	ResourceManager::onFrame();
 	IntelManager::onFrame();
-	//MilitaryManager::onFrame();
+	MilitaryManager::onFrame();
 
 }
 
