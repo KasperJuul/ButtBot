@@ -10,6 +10,8 @@ std::string BuildingPlanner::plan;
 float BuildingPlanner::econ = 0;
 float BuildingPlanner::mili = 0;
 float BuildingPlanner::tech = 0;
+float BuildingPlanner::maxCombat = 1;
+float BuildingPlanner::maxCombatEnemy = 1;
 
 void BuildingPlanner::plannerOnFrame(){
 
@@ -26,7 +28,7 @@ BWAPI::UnitType BuildingPlanner::chooseBetweenMilitary(std::vector<TechNode> sel
 	BWAPI::UnitType selected;
 	float priority = 0;
 	for (auto ut : selection){
-		float tempPriority = combatValue(ut);//To be made dynamic later with military manager
+		float tempPriority = combatValue(ut)/maxCombat * 100 + specialValue(ut);//To be made dynamic later with military manager
 		tempPriority += specialValue(ut);
 		if (tempPriority > priority){
 			tempPriority = priority;
@@ -93,7 +95,7 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 		if (u->getType() == BWAPI::UnitTypes::Protoss_Reaver){
 			if (!u->isTraining() && u->getScarabCount() < 5){
 				Priority scarab;
-				scarab.priority = combatValue(BWAPI::UnitTypes::Protoss_Scarab);
+				scarab.priority = combatValue(BWAPI::UnitTypes::Protoss_Scarab)/maxCombat* 100;
 				scarab.unitType = BWAPI::UnitTypes::Protoss_Scarab;
 				scarab.declaration = TypeDec::UnitDec;
 				finalOrder.push_back(scarab);
@@ -102,7 +104,7 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 		if (u->getType() == BWAPI::UnitTypes::Protoss_Interceptor){
 			if (!u->isTraining() && u->getInterceptorCount() < 5){
 				Priority interceptor;
-				interceptor.priority = combatValue(BWAPI::UnitTypes::Protoss_Interceptor);
+				interceptor.priority = combatValue(BWAPI::UnitTypes::Protoss_Interceptor)/maxCombat * 100;
 				interceptor.unitType = BWAPI::UnitTypes::Protoss_Interceptor;
 				interceptor.declaration = TypeDec::UnitDec;
 				finalOrder.push_back(interceptor);
@@ -226,6 +228,21 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 }
 
 std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CODE'S MAIN FUNCTION.
+	maxCombat = 1;
+	for (auto ot : InformationManager::ourTech){
+		float val = combatValue(ot);
+		if (val > maxCombat){
+			maxCombat = val;
+		}
+	}
+	maxCombatEnemy = 1;
+	for (auto ot : InformationManager::theirTech){
+		float val = combatValue(ot);
+		if (val > maxCombatEnemy){
+			maxCombatEnemy = val;
+		}
+	}
+
 	std::vector<Priority> economy;
 	std::vector<Priority> military;
 	Priority technology;
@@ -262,7 +279,7 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 							//Debug::errorLogMessages("This shouldn't be called atm");
 							UnitType tempType = chooseBetweenMilitary(toSelectFrom);
 							Priority temp;
-							temp.priority = combatValue(tempType) + specialValue(tempType);
+							temp.priority = combatValue(tempType)/maxCombat*100 + specialValue(tempType);
 							temp.unitType = tempType;
 							temp.declaration = TypeDec::UnitDec;
 							military.push_back(temp);
@@ -303,7 +320,7 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 				//Debug::errorLogMessages("This shouldn't be called atm");
 				UnitType tempType = chooseBetweenMilitary(toSelectFrom);
 				Priority temp;
-				temp.priority = combatValue(tempType) + specialValue(tempType);
+				temp.priority = combatValue(tempType)/maxCombat * 100 + specialValue(tempType);
 				temp.unitType = tempType;
 				temp.declaration = TypeDec::UnitDec;
 				military.push_back(temp);
