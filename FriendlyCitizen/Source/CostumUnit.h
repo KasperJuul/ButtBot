@@ -47,8 +47,6 @@ public:
 	WorkerUnit(){
 		type = CostumType::WORKER;
 	}
-
-	BWAPI::Unit center;
 	bool inQ = false;
 	bool returningCargo = false;
 	bool gasworker = false;
