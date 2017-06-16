@@ -89,6 +89,26 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 	if (supplier.priority > 50 && Broodwar->self()->supplyTotal() != 400){
 		finalOrder.push_back(supplier);
 	}
+	for (auto u : Broodwar->self()->getUnits()){
+		if (u->getType() == BWAPI::UnitTypes::Protoss_Reaver){
+			if (!u->isTraining() && u->getScarabCount() < 5){
+				Priority scarab;
+				scarab.priority = combatValue(BWAPI::UnitTypes::Protoss_Scarab);
+				scarab.unitType = BWAPI::UnitTypes::Protoss_Scarab;
+				scarab.declaration = TypeDec::UnitDec;
+				finalOrder.push_back(scarab);
+			}
+		}
+		if (u->getType() == BWAPI::UnitTypes::Protoss_Interceptor){
+			if (!u->isTraining() && u->getInterceptorCount() < 5){
+				Priority interceptor;
+				interceptor.priority = combatValue(BWAPI::UnitTypes::Protoss_Interceptor);
+				interceptor.unitType = BWAPI::UnitTypes::Protoss_Interceptor;
+				interceptor.declaration = TypeDec::UnitDec;
+				finalOrder.push_back(interceptor);
+			}
+		}
+	}
 	//Higher value comes before lower value. If tied, mili>econ>tech. This is not ensured by the structure below, but by the += 0.02~ above.
 	if (mili>econ && mili>tech){
 		//finalOrder = military;
@@ -379,6 +399,7 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 	if (supplier.priority > 50){
 		//economy.push_back(supplier);
 	}
+	
 	
 
 	std::sort(military.rbegin(),military.rend());
