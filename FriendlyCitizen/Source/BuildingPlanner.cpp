@@ -14,6 +14,7 @@ float BuildingPlanner::tech = 0;
 float BuildingPlanner::maxCombat = 1;
 float BuildingPlanner::maxCombatEnemy = 1;
 
+//Deprecated
 void BuildingPlanner::plannerOnFrame(){
 
 	/*makePlan();//TEST, REMOVE LATER
@@ -180,7 +181,7 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 			for (auto p : economy){
 				finalOrder.push_back(p);
 			}
-		}//TODO TO TOMORROW ME: Bug in technology, returns marine instead of gateway.
+		}
 	}
 	else if (econ > mili && econ > tech){
 		for (auto p : economy){
@@ -606,6 +607,7 @@ std::vector<float> BuildingPlanner::techValue(std::vector<int> possibleNodes, st
 	}
 }
 
+//Deprecated but used for debugging purposes
 std::vector<Priority> BuildingPlanner::makePlanN(){
 	std::vector<Priority> fullList = *new std::vector<Priority>();
 	//Units and buildings

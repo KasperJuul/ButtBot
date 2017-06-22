@@ -173,13 +173,16 @@ void ResourceManager::qGather(){
 			w->state = 0;
 			break;
 		case 6:		// Moving towards the mineral patch to wait or gather if it becomes the first in line on the way
-			if (w->unit->getDistance(w->mineral->unit) < 2){
+			if (w->unit->getDistance(w->mineral->unit) < 2*32){
 				w->unit->stop();
 				w->state = 7;
 			}
 			else if (w->unit == w->mineral->workers.front()){
 				w->unit->gather(w->mineral->unit);
 				w->state = 2;
+			}
+			else {
+				w->unit->gather(w->mineral->unit);
 			}
 			break;
 		case 7:		// Wait until its your turn to mine

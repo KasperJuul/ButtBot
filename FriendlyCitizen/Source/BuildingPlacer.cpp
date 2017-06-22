@@ -36,6 +36,20 @@ void BuildingPlacer::onFrame(){
 		Debug::errorLogMessages("Reserved gas negative");
 	}
 
+	for (auto u : Broodwar->self()->getUnits()){
+		if (u->getType() == UnitTypes::Protoss_Carrier && !u->isTraining()){
+			if (u->getInterceptorCount() != 5){
+				u->train(UnitTypes::Protoss_Interceptor);
+			}
+		}
+		if (u->getType() == UnitTypes::Protoss_Reaver && !u->isTraining()){
+			if (u->getScarabCount() != 5){
+				u->train(UnitTypes::Protoss_Scarab);
+			}
+
+		}
+	}
+
 	for (auto build : BuildingPlanner::findOrder()){
 		if (build.unitType == UnitTypes::None){
 			continue;
@@ -48,6 +62,9 @@ void BuildingPlacer::onFrame(){
 		
 		if (!canAfford && canAffordM){
 			continue;
+		}
+		if (!canAffordM){
+			break;
 		}
 
 		if (canAfford){
@@ -71,6 +88,16 @@ void BuildingPlacer::onFrame(){
 					}
 				}
 			}
+			/*else if (build.unitType == UnitTypes::Protoss_Scarab || build.unitType == UnitTypes::Protoss_Interceptor){
+				for (auto &u : Broodwar->self()->getUnits()){
+					if (u->canTrain(build.unitType) && !u->isTraining()){
+						if (Broodwar->self()->supplyTotal() - Broodwar->self()->supplyUsed() - build.unitType.supplyRequired() >= 0){
+							u->train(build.unitType);
+						}
+						break;
+					}
+				}
+			}*/
 			else if (build.unitType.isBuilding()){
 				bool ip = false;
 				for (auto bu : builders){

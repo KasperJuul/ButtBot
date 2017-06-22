@@ -204,8 +204,45 @@ void MilitaryManager::onFrame(){
 										  targetBuildings.push_back(eu);
 									  }
 								  }
+								  std::vector<MilitaryUnit*> empoweredUnits;
+								  std::vector<MilitaryUnit*> weakenedUnits;
 								  for (auto mu : InformationManager::militaryUnits){
+									  float ourLocalStrength = 0;
+									  for (auto u : Broodwar->getUnitsInRadius(mu->unit->getPosition(), 200, BWAPI::Filter::IsAlly)){
+										  ourLocalStrength += BuildingPlanner::combatValue(u->getType()) / BuildingPlanner::maxCombat * 100 + BuildingPlanner::specialValue(u->getType());
+									  }
+									  if (ourLocalStrength > ourStrength*0.5){
+										  empoweredUnits.push_back(mu);
+									  }
+									  else {
+										  weakenedUnits.push_back(mu);
+									  }
+								  }
+								  for (auto mu : empoweredUnits){
 									  MiliHTN::invade(*mu, targets, targetBuildings);
+								  }
+								  int i = 0;
+								  for (auto mu : weakenedUnits){
+									  
+									  i++;
+
+									  bool combat = false;
+									  for (auto u : Broodwar->getUnitsInRadius(mu->unit->getPosition(), 200, BWAPI::Filter::IsEnemy)){
+										  combat = true;
+									  }
+									  if (combat){
+										  MiliHTN::invade(*mu, targets, targetBuildings);
+										  continue;
+									  }
+									  i = i % weakenedUnits.size();
+									  if (!empoweredUnits.empty()){
+										  //Move closer to empowered units.
+										  mu->unit->move(empoweredUnits.at(0)->unit->getPosition());
+									  }
+									  else {
+										  //Move all military units closer.
+										  mu->unit->move(weakenedUnits.at(i)->unit->getPosition());
+									  }
 								  }
 	}
 		break;

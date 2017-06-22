@@ -169,11 +169,10 @@ BWAPI::Unit MiliHTN::chooseTarget(BWAPI::Unit attacker, std::set<BWAPI::Unit> ta
 	double min = DBL_MAX;
 	BWAPI::Unit bestTarget;
 	for (auto u : targets){
-		
-		if (u->getType().isFlyer() && attacker->getType().airWeapon().damageAmount() < 1){
+		if (u->getType().isFlyer() && attacker->getType().airWeapon().damageAmount() < 1 && attacker->getType() != BWAPI::UnitTypes::Protoss_Carrier){
 			continue;
 		}
-		if (!u->getType().isFlyer() && attacker->getType().groundWeapon().damageAmount() < 1){
+		if (!u->getType().isFlyer() && attacker->getType().groundWeapon().damageAmount() < 1 && attacker->getType() != BWAPI::UnitTypes::Protoss_Reaver && attacker->getType() != BWAPI::UnitTypes::Protoss_Carrier){
 			continue;
 		}
 		if (u->isCloaked()){
@@ -208,6 +207,9 @@ BWAPI::Unit MiliHTN::chooseTarget(BWAPI::Unit attacker, std::set<BWAPI::Unit> ta
 
 //Low abstraction
 bool MiliHTN::attack(BWAPI::Unit attacker, BWAPI::Unit target){
+	/*if (attacker->getType() == BWAPI::UnitTypes::Protoss_Carrier || attacker->getType() == BWAPI::UnitTypes::Protoss_Reaver){
+		return attacker->attack(target);
+	}*/
 	BWAPI::UnitCommand currentCommand(attacker->getLastCommand());
 	/*Broodwar << std::to_string(attacker->getLastCommandFrame() < BWAPI::Broodwar->getFrameCount()) <<
 		//std::to_string(currentCommand.getType() != BWAPI::UnitCommandTypes::Attack_Unit) <<
@@ -222,6 +224,9 @@ bool MiliHTN::attack(BWAPI::Unit attacker, BWAPI::Unit target){
 		!attacker->isStartingAttack()){//Inspired by Ualbertabot's smart attack
 		return attacker->attack(target);
 		
+	}
+	else if (currentCommand.getTarget() != target){
+		return attacker->attack(target);
 	}
 
 	return false;

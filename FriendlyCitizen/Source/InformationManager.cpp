@@ -169,6 +169,7 @@ void InformationManager::firstEncounter(BWAPI::Race theirRace){
 }
 
 //Basic bwapi function implementations
+//Needs to be refactored
 void InformationManager::StartAnalysis(){//Initializes informationmanager
 	//Initialization - Algorithmic bools
 	InformationManager::enemyFound = false;
@@ -579,6 +580,7 @@ void InformationManager::OnUnitDestroy(Unit unit){
 }
 
 
+//Deprecated
 void InformationManager::AssignUnit(UnitStatus unit, UnitState state, OwnerProcess process){
 	unit.state = state;
 	unit.owner = process;
