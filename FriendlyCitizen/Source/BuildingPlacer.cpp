@@ -194,12 +194,12 @@ void BuildingPlacer::builderStateMachine(){
 					b->state = 5;  // SPECIAL CASE FOR PROTOSS
 				}
 			}
-			else{
+			else {
 				b->state = 1;
 			}
 			break;
 		case 1:	// Wait for it......
-			if (!pylonIsInProgress  && Broodwar->self()->incompleteUnitCount(InformationManager::ourRace.getSupplyProvider()) < 1){
+			if ((!pylonIsInProgress || b->buildingProject == UnitTypes::Protoss_Pylon)  && Broodwar->self()->incompleteUnitCount(InformationManager::ourRace.getSupplyProvider()) < 1){
 				// Register an event that draws the target build location
 				Broodwar->registerEvent([tile, unitype](Game*)
 				{
