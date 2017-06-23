@@ -199,7 +199,7 @@ void BuildingPlacer::builderStateMachine(){
 			}
 			break;
 		case 1:	// Wait for it......
-			if ((!pylonIsInProgress || b->buildingProject == UnitTypes::Protoss_Pylon)  && Broodwar->self()->incompleteUnitCount(InformationManager::ourRace.getSupplyProvider()) < 1){
+			//if ((!pylonIsInProgress || b->buildingProject == UnitTypes::Protoss_Pylon)  && Broodwar->self()->incompleteUnitCount(InformationManager::ourRace.getSupplyProvider()) < 1){
 				// Register an event that draws the target build location
 				Broodwar->registerEvent([tile, unitype](Game*)
 				{
@@ -214,7 +214,7 @@ void BuildingPlacer::builderStateMachine(){
 				b->unit->move((Position)tile);
 				Broodwar << "worker " << std::to_string(b->unit->getID()) << " is going to build " << unitype.toString() << std::endl;
 				b->state = 2;
-			}
+			//}
 
 			break;
 		case 2:	// Moving to build 
@@ -262,7 +262,7 @@ void BuildingPlacer::builderStateMachine(){
 				}
 			}
 		case 5: // Protoss waiting state
-			if (Broodwar->self()->incompleteUnitCount(UnitTypes::Protoss_Pylon) < 1){
+			if (!pylonIsInProgress){
 				b->buildTarget = getBuildTile(b->buildingProject, Broodwar->self()->getStartLocation());
 				b->state = 0;
 			}
@@ -286,7 +286,17 @@ TilePosition BuildingPlacer::getBuildTile(UnitType buildingType, TilePosition ar
 	
 	// Refinery, Assimilator, Extractor
 	if (buildingType.isRefinery()) {
-		return Broodwar->getBuildLocation(InformationManager::ourRace.getRefinery(), InformationManager::firstCenter->getTilePosition());
+		for (auto c : InformationManager::productionBuildings){
+			if (c->unit->getType().isResourceDepot()){
+				if (c->unit->getRegion()->getUnits(Filter::IsRefinery).size() == 0 && BWTA::getNearestBaseLocation(c->unit->getPosition())->getGeysers().size() <= 1){
+					BWAPI::Unitset geysers = BWTA::getNearestBaseLocation(c->unit->getPosition())->getGeysers();
+					for (auto g : geysers){
+						return g->getTilePosition();
+					}
+				}
+			}
+		}
+		return ret; //Broodwar->getBuildLocation(InformationManager::ourRace.getRefinery(), InformationManager::firstCenter->getTilePosition());
 		//for (const auto& geyser : BWTA::getStartLocation(Broodwar->self())->getGeysers()) {
 		//	TilePosition p1 = geyser->getInitialTilePosition();
 		//	if (geyser->exists()){

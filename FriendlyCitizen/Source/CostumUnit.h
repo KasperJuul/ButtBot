@@ -55,7 +55,7 @@ public:
 	bool isScout = false;
 	bool firstTimeZero = true;
 	BWAPI::TilePosition buildTarget = BWAPI::TilePositions::None;
-	ResourceManager::mineralPatch* mineral;
+	ResourceManager::mineralPatch* mineral = NULL;
 	BWAPI::UnitType buildingProject = BWAPI::UnitTypes::None;
 	int state = 0;
 	UnitState unitState = UnitState::FREE;

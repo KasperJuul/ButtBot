@@ -31,15 +31,15 @@ public:
 	static void qGather();
 	static void gasGather();
 
-	static int workTime(mineralPatch m);
-	static int workTime(BWAPI::Unit unit, mineralPatch m, int n);
-	static int workTime2(BWAPI::Unit unit, mineralPatch m, int n);
-	static int roundTrip(BWAPI::Unit u , mineralPatch m);
-	static mineralPatch* roundTrip_min(BWAPI::Unit u, std::vector<ResourceManager::mineralPatch>* patches);
+	static float workTime(mineralPatch m);
+	static float workTime(BWAPI::Unit unit, mineralPatch m, int n);
+	static float workTime2(BWAPI::Unit unit, mineralPatch m, int n);
+	static float roundTrip(BWAPI::Unit u, mineralPatch* m);
+	static mineralPatch* roundTrip_min(BWAPI::Unit u, std::vector<ResourceManager::mineralPatch*> *patches);
 
 	
 
-	static std::vector<ResourceManager::mineralPatch> minPatches;
+	static std::vector<ResourceManager::mineralPatch*> minPatches;
 	static std::string log;
 };
 

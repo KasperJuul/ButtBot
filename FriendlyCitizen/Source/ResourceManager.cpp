@@ -14,7 +14,7 @@ using namespace Filter;
 
 std::string ResourceManager::log = "";
 static int miningTimeConstant = 80;
-std::vector<ResourceManager::mineralPatch> ResourceManager::minPatches;
+std::vector<ResourceManager::mineralPatch*> ResourceManager::minPatches;
 
 
 void ResourceManager::onStart(){
@@ -34,10 +34,10 @@ void ResourceManager::findMinPatches(){
 	int itr = 0;
 	for (auto m : Broodwar->getMinerals()){
 		//if (InformationManager::mainBase->getRegion()->getPolygon().isInside(m->getPosition())){
-			mineralPatch temp;
-			temp.unit = m;
-			temp.name = "M" + std::to_string(itr);
-			temp.workers.clear();
+			mineralPatch* temp = new mineralPatch;
+			temp->unit = m;
+			temp->name = "M" + std::to_string(itr);
+			temp->workers.clear();
 			minPatches.push_back(temp);
 			itr++;
 		//}
@@ -48,10 +48,10 @@ void ResourceManager::addMinPatches( Unit unit){
 	int itr = minPatches.size();
 	BWAPI::Region centerRegion = unit->getRegion();
 	for (auto m : centerRegion->getUnits(Filter::IsMineralField)){
-		mineralPatch temp;
-		temp.unit = m;
-		temp.name = "M" + std::to_string(itr);
-		temp.workers.clear();
+		mineralPatch* temp;
+		temp->unit = m;
+		temp->name = "M" + std::to_string(itr);
+		temp->workers.clear();
 		minPatches.push_back(temp);
 		itr++;
 	}
@@ -119,6 +119,13 @@ void ResourceManager::qGather(){
 			}
 		}
 
+		if (w->mineral != NULL){
+			if (w->mineral->workers.empty() && w->inQ){
+				w->state = 0;
+				w->inQ = false;
+			}
+		}
+
 		switch (w->state){
 		case 0 :	// Initial state: Not in a queue and not doing anything
 			w->returningCargo = false;
@@ -148,19 +155,25 @@ void ResourceManager::qGather(){
 			if (w->unit->isCarryingMinerals()){
 				w->unit->returnCargo();
 				w->returningCargo = true;
-				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
-					if (w->mineral->workers.at(i) = w->unit){
-						w->mineral->workers.erase(w->mineral->workers.begin() + i);
-						w->inQ = false;
-					}
-				}
+				//for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
+				//	if (w->mineral->workers.at(i) = w->unit){
+				//		
+				//		w->mineral->workers.erase(w->mineral->workers.begin() + i);
+				//		w->inQ = false;
+				//	}
+				//}
+				w->mineral->workers.pop_front();
+				w->inQ = false;
 				w->state = 4;
 			}
-			else if (!w->unit->isGatheringMinerals()){
-				if (!w->unit->gather(w->mineral->unit)){
-					w->state = 4;
-				}
+			if (w->unit->isIdle()){
+				w->state = 1;
 			}
+			//else if (!w->unit->isGatheringMinerals()){
+			//	if (!w->unit->gather(w->mineral->unit)){
+			//		w->state = 4;
+			//	}
+			//}
 			break;
 		case 4:		// Have aquired a mineral and is now returning it
 			if (!w->unit->isCarryingMinerals()){
@@ -173,7 +186,7 @@ void ResourceManager::qGather(){
 			w->state = 0;
 			break;
 		case 6:		// Moving towards the mineral patch to wait or gather if it becomes the first in line on the way
-			if (w->unit->getDistance(w->mineral->unit) < 2*32){
+			if (w->unit->getDistance(w->mineral->unit) < 3*32){
 				w->unit->stop();
 				w->state = 7;
 			}
@@ -197,58 +210,68 @@ void ResourceManager::qGather(){
 }
 
 // Waiting time and Roundtrip calcutaions
-int ResourceManager::workTime(mineralPatch m){
-	int w = 0;
+float ResourceManager::workTime(mineralPatch m){
+	float w = 0;
 	for (unsigned int i = 0; i < m.workers.size(); i++){
 		w += workTime(m.workers[i], m , i);
 	}
 	return w;
 }
 
-int ResourceManager::workTime(Unit unit, mineralPatch m, int n){
-	int sum = 0;
+float ResourceManager::workTime(Unit unit, mineralPatch m, int n){
+	float sum = 0;
 	if (n > 0){
 		for (int i = 0; i <= n - 1; i++){
 			sum += workTime2(m.workers[i], m, i);
 		}
 	}
-	int dist = (int) ((unit->getDistance(m.unit)) / (unit->getType().topSpeed()));
-	int W = std::max(0, dist - sum) + miningTimeConstant;
+	float dist = (float)((unit->getDistance(m.unit)) / (unit->getType().topSpeed()));
+	float W = std::max(0.0f, dist - sum) + miningTimeConstant;
 	log += "	Work(W) = MAX(0, " + std::to_string(dist) + " - " + std::to_string(sum) + ") + " + std::to_string(miningTimeConstant) + " = " + std::to_string(W) + "\n";
 	return W;
 }
 
-int ResourceManager::workTime2(Unit unit, mineralPatch m, int n){
-	int sum = 0;
+float ResourceManager::workTime2(Unit unit, mineralPatch m, int n){
+	float sum = 0;
 	if (n > 0){
 		for (int i = 0; i <= n - 1; i++){
 			sum += workTime2(m.workers[i], m, i);
 		}
 	}
-	int dist = (int)((unit->getDistance(m.unit)) / (unit->getType().topSpeed()));
-	return std::max(0, dist - sum) + miningTimeConstant;
+	float dist = (float)((unit->getDistance(m.unit)) / (unit->getType().topSpeed()));
+	return std::max(0.0f, dist - sum) + miningTimeConstant;
 }
 
-int ResourceManager::roundTrip(Unit unit, mineralPatch m){
-	int distance_UtoM = (int)((unit->getDistance(m.unit))*4 / (unit->getType().topSpeed()));
-	int distance_MtoD = (int)((m.unit)->getDistance(InformationManager::firstCenter) / (unit->getType().topSpeed()));
-	int derp = workTime(m);
-	int R = distance_UtoM + std::max(0, derp - distance_UtoM) + miningTimeConstant + distance_MtoD;
+float ResourceManager::roundTrip(Unit unit, mineralPatch* m){
+	float distance_UtoM = (float)((unit->getDistance(m->unit)) * 4 / (unit->getType().topSpeed()));
+	float distance_MtoD = (float)((m->unit)->getDistance(InformationManager::firstCenter) / (unit->getType().topSpeed()));
+	for (auto c : InformationManager::productionBuildings){
+		if (c->unit->getType().isResourceDepot()){
+			float tmp_dist = (float)((m->unit)->getDistance(c->unit) / (unit->getType().topSpeed()));
+			if (tmp_dist < distance_MtoD){
+				distance_MtoD = tmp_dist;
+			}
+
+		}
+	}
+	
+	float derp = workTime(*m);
+	float R = distance_UtoM + std::max(0.0f, derp - distance_UtoM) + miningTimeConstant + distance_MtoD;
 
 	log += "	R(W,M) = " + std::to_string(distance_UtoM) + " + MAX(0, " + std::to_string(derp) + " - " + std::to_string(distance_UtoM) + ") + " + std::to_string(miningTimeConstant) + " + " + std::to_string(distance_MtoD) + " = " + std::to_string(R) + "\n";
 	return R;
 }
 
-ResourceManager::mineralPatch* ResourceManager::roundTrip_min(Unit unit, std::vector<ResourceManager::mineralPatch>* patches){
-	int time = INT_MAX;
+ResourceManager::mineralPatch* ResourceManager::roundTrip_min(Unit unit, std::vector<ResourceManager::mineralPatch*> *patches){
+	float time = FLT_MAX;
 	int patchItr = 0;
 	int itr = 0;
 	for (auto m : *patches){
-		if (m.workers.size() > 1){
+		if (m->workers.size() > 2){
 			itr++;
 			continue;
 		}
-		int tripTime = roundTrip(unit, m);
+		float tripTime = roundTrip(unit, m);
 		if (tripTime < time){
 			time = tripTime;
 			patchItr = itr;
@@ -257,14 +280,14 @@ ResourceManager::mineralPatch* ResourceManager::roundTrip_min(Unit unit, std::ve
 		itr++;
 	
 	}
-	return &patches->at(patchItr);
+	return patches->at(patchItr);
 }
 
 ///////////////// OLD STUFF //////////////////////////////////////////
 
 void ResourceManager::drawMinCircles(){
 	for (const auto& mineral : minPatches) {
-		Broodwar->drawCircleMap(mineral.unit->getInitialPosition(), 30, Colors::Cyan);
+		Broodwar->drawCircleMap(mineral->unit->getInitialPosition(), 30, Colors::Cyan);
 	}
 }
 

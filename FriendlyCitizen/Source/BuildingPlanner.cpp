@@ -256,7 +256,10 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 				temp.priority = econValue(InformationManager::ourRace.getWorker());
 				temp.unitType = InformationManager::ourRace.getWorker();
 				temp.declaration = TypeDec::UnitDec;
-				economy.push_back(temp);
+				if (InformationManager::workerUnits.size() <= 50){
+					economy.push_back(temp);
+
+				}
 			}
 			else {
 				if (Broodwar->self()->getRace() != BWAPI::Races::Zerg){//Zergs produces all their units from larva or drones (or upgrade morphs)! They have NO production buildings!

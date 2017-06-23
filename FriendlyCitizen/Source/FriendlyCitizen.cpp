@@ -55,7 +55,7 @@ void FriendlyCitizen::onStart()
 		analyzed = false;
 		analysis_just_finished = false;
 	}
-	Broodwar->setLocalSpeed(41);
+	Broodwar->setLocalSpeed(5);
 
 
 	//Broodwar->sendText("show me the money");
@@ -73,6 +73,25 @@ void FriendlyCitizen::onStart()
 
 void FriendlyCitizen::onEnd(bool isWinner)
 {
+
+	std::vector<std::string> MinToString;
+	for (auto m : ResourceManager::minPatches){
+		std::string wrks = "";
+		for (auto w : m->workers){
+			wrks += " " + std::to_string(w->getID());
+			for (auto w2 : InformationManager::workerUnits){
+				if (w == w2->unit){
+					wrks += " " + std::to_string(w2->state) + " " + w2->mineral->name + ",";
+					break;
+				}
+			}	
+		}
+
+
+		MinToString.push_back(m->name + ":" + wrks);
+	}
+	Debug::writeLog(MinToString, "mineralLogs", "test");
+
 	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
 		std::string temp = "This unit builds:\n";
 		for (unsigned int i2 = 0; i2 < InformationManager::ourTech.at(i).effect.size(); i2++){
@@ -318,6 +337,28 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 {
 	InformationManager::OnUnitDestroy(unit);
+
+	if (unit->getType().isMineralField()){
+		
+		int m_itr = 0;
+		for (auto m : ResourceManager::minPatches){
+			if (m->unit == unit){
+				for (auto w : m->workers){
+					for (auto w2 : InformationManager::workerUnits){
+						if (w == w2->unit){
+							w2->inQ = false;
+							w2->mineral = NULL;
+							w2->state = 0;
+						}
+					}
+				}
+				Broodwar << "Mineralfield ID " << m->name << "is mined out" << std::endl;
+				ResourceManager::minPatches.erase(ResourceManager::minPatches.begin() + m_itr);
+				break;
+			}
+			m_itr++;
+		}
+	}
 
 	if (unit->getType().isWorker()){
 		int witr = 0;

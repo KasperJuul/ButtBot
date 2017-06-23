@@ -139,22 +139,22 @@ void Debug::screenInfo(){
 	//Broodwar->drawTextScreen(20, 200, std::to_string(InformationManager::enemyUnits.size()).c_str());
 	int some = 0;
 	for (auto m :ResourceManager::minPatches){
-		std::string minstring = m.name + ": ";
+		std::string minstring = m->name + ": ";
 		std::string gathered = "";
-		if (!m.workers.empty()){
-			for (unsigned int j = 0; j < m.workers.size(); j++){
-				minstring += "[" + std::to_string(m.workers.at(j)->getID()) + "] ";
+		if (!m->workers.empty()){
+			for (unsigned int j = 0; j < m->workers.size(); j++){
+				minstring += "[" + std::to_string(m->workers.at(j)->getID()) + "] ";
 			}
 		}
-		if (m.unit->isBeingGathered()){
+		if (m->unit->isBeingGathered()){
 			gathered = "True";
 		}
 		else {
 			gathered = "False";
 		}
 		Broodwar->drawTextScreen(20, 80 + (some * 10), minstring.c_str());
-		Broodwar->drawTextMap(m.unit->getPosition() + Position(-5, -10), "%c%s", Text::Yellow, m.name.c_str());
-		Broodwar->drawTextMap(m.unit->getPosition() + Position(-5, -20), "%c%s", Text::Yellow, gathered.c_str());
+		Broodwar->drawTextMap(m->unit->getPosition() + Position(-5, -10), "%c%s", Text::Yellow, m->name.c_str());
+		Broodwar->drawTextMap(m->unit->getPosition() + Position(-5, -20), "%c%s", Text::Yellow, gathered.c_str());
 
 		some++;
 
