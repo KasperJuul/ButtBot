@@ -193,6 +193,18 @@ BWAPI::Unit MiliHTN::chooseTarget(BWAPI::Unit attacker, std::set<BWAPI::Unit> ta
 		if (damage < 1){
 			damage = 1;
 		}
+
+		//Exception types
+		if (u->getType() == BWAPI::UnitTypes::Terran_Barracks){
+			damage = 10;
+		}
+		if (u->getType() == BWAPI::UnitTypes::Protoss_Carrier){
+			damage = 10;
+		}
+		if (u->getType() == BWAPI::UnitTypes::Protoss_Reaver){
+			damage = 10;
+		}
+
 		double val = u->getDistance(attacker)/damage - damage / (double)(u->getHitPoints() + u->getShields());
 		if (val < min){
 			min = val;

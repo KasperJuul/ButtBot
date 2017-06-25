@@ -254,7 +254,7 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 		finalOrder.push_back(temp);
 	}
 
-	if (Broodwar->self()->minerals() > 1500 && Broodwar->self()->getRace != BWAPI::Races::Zerg){
+	if (Broodwar->self()->minerals() > 1500 && Broodwar->self()->getRace() != BWAPI::Races::Zerg){
 		Priority temp;
 		temp.declaration = TypeDec::UnitDec;
 		temp.priority = 0;
