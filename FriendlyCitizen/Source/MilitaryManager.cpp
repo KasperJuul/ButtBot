@@ -76,7 +76,7 @@ void MilitaryManager::onFrame(){
 			continue;
 		}
 
-		float temp = BuildingPlanner::combatValue(ou->unit->getType())/BuildingPlanner::maxCombat*100 + BuildingPlanner::specialValue(ou->unit->getType());//TODO: make custom heuristic for military
+		float temp = BuildingPlanner::combatValue(ou->unit->getType())/BuildingPlanner::maxCombat*100 + BuildingPlanner::specialValue(ou->unit->getType(),true);//TODO: make custom heuristic for military
 		if (temp > 0){
 			ourStrength += temp;
 		}
@@ -96,7 +96,7 @@ void MilitaryManager::onFrame(){
 		if (eu.selfType == Broodwar->enemy()->getRace().getWorker()){
 			continue;
 		}
-		float temp = BuildingPlanner::combatValue(eu.selfType)/BuildingPlanner::maxCombatEnemy*100 + BuildingPlanner::specialValue(eu.selfType);
+		float temp = BuildingPlanner::combatValue(eu.selfType)/BuildingPlanner::maxCombatEnemy*100 + BuildingPlanner::specialValue(eu.selfType,false);
 		if (temp > 0){
 			theirStrength += temp;
 		}
@@ -209,7 +209,7 @@ void MilitaryManager::onFrame(){
 								  for (auto mu : InformationManager::militaryUnits){
 									  float ourLocalStrength = 0;
 									  for (auto u : Broodwar->getUnitsInRadius(mu->unit->getPosition(), 200, BWAPI::Filter::IsAlly)){
-										  ourLocalStrength += BuildingPlanner::combatValue(u->getType()) / BuildingPlanner::maxCombat * 100 + BuildingPlanner::specialValue(u->getType());
+										  ourLocalStrength += BuildingPlanner::combatValue(u->getType()) / BuildingPlanner::maxCombat * 100 + BuildingPlanner::specialValue(u->getType(),false);
 									  }
 									  if (ourLocalStrength > ourStrength*0.5){
 										  empoweredUnits.push_back(mu);

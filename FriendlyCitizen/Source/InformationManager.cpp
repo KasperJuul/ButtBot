@@ -143,25 +143,25 @@ void InformationManager::firstEncounter(BWAPI::Race theirRace){
 
 	//Connect the building/unit tech graph.
 	//For every node, we want to fill up the node's effect and precon vectors
-	for (unsigned int i = 0; i < InformationManager::ourTech.size(); i++){
-		for (auto u : InformationManager::ourTech.at(i).selfType.buildsWhat()){//For each object that the current node can build..
-			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
-				if (InformationManager::ourTech.at(i2).selfType == u){
-					InformationManager::ourTech.at(i).effect.push_back(&InformationManager::ourTech.at(i2));
+	for (unsigned int i = 0; i < InformationManager::theirTech.size(); i++){
+		for (auto u : InformationManager::theirTech.at(i).selfType.buildsWhat()){//For each object that the current node can build..
+			for (unsigned int i2 = 0; i2 < InformationManager::theirTech.size(); i2++){//We try to find its corresponding node
+				if (InformationManager::theirTech.at(i2).selfType == u){
+					InformationManager::theirTech.at(i).effect.push_back(&InformationManager::theirTech.at(i2));
 				}
 			}
 		}
-		for (auto u : InformationManager::ourTech.at(i).selfType.requiredUnits()){
-			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){
-				if (InformationManager::ourTech.at(i2).selfType == u.first){
-					InformationManager::ourTech.at(i).precondition.push_back(&InformationManager::ourTech.at(i2));
+		for (auto u : InformationManager::theirTech.at(i).selfType.requiredUnits()){
+			for (unsigned int i2 = 0; i2 < InformationManager::theirTech.size(); i2++){
+				if (InformationManager::theirTech.at(i2).selfType == u.first){
+					InformationManager::theirTech.at(i).precondition.push_back(&InformationManager::theirTech.at(i2));
 				}
 			}
 		}
-		if (InformationManager::ourTech.at(i).selfType.producesLarva()){
-			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
-				if (InformationManager::ourTech.at(i2).selfType == UnitTypes::Zerg_Larva){
-					InformationManager::ourTech.at(i).effect.push_back(&InformationManager::ourTech.at(i2));
+		if (InformationManager::theirTech.at(i).selfType.producesLarva()){
+			for (unsigned int i2 = 0; i2 < InformationManager::theirTech.size(); i2++){//We try to find its corresponding node
+				if (InformationManager::theirTech.at(i2).selfType == UnitTypes::Zerg_Larva){
+					InformationManager::theirTech.at(i).effect.push_back(&InformationManager::theirTech.at(i2));
 				}
 			}
 		}
@@ -321,13 +321,13 @@ void InformationManager::makeTechGraph(){
 				}
 			}
 		}
-		if (InformationManager::ourTech.at(i).selfType.producesLarva()){
+		/*if (InformationManager::ourTech.at(i).selfType.producesLarva()){
 			for (unsigned int i2 = 0; i2 < InformationManager::ourTech.size(); i2++){//We try to find its corresponding node
 				if (InformationManager::ourTech.at(i2).selfType == UnitTypes::Zerg_Larva){
 					InformationManager::ourTech.at(i).effect.push_back(&InformationManager::ourTech.at(i2));
 				}
 			}
-		}
+		}*/
 	}
 }
 

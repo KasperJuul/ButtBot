@@ -133,14 +133,15 @@ void MiliHTN::defend(MilitaryUnit defender, std::set<BWAPI::Unit> targets){
 	}
 	else {
 		std::set<BWAPI::Unit> targets2;
-		for (auto u : Broodwar->getUnitsInRadius(defender.unit->getPosition(), 1000, BWAPI::Filter::IsEnemy)){
+		for (auto u : Broodwar->getUnitsInRadius(defender.unit->getPosition(), 100, BWAPI::Filter::IsEnemy)){
 			if (u->getType() != UnitTypes::Zerg_Larva && u->getType().topSpeed() > defender.unit->getType().topSpeed()){
 				targets2.insert(u);
+				//Broodwar << "I'm slow! " << std::endl;
 			}
 		}
 		
 		BWAPI::Unit nearest = NULL;
-		if (!targets.empty()){
+		if (!targets2.empty()){
 			nearest = chooseTarget(defender.unit,targets2);
 		}
 

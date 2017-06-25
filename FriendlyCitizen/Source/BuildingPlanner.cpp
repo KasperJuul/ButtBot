@@ -13,6 +13,7 @@ float BuildingPlanner::mili = 0;
 float BuildingPlanner::tech = 0;
 float BuildingPlanner::maxCombat = 1;
 float BuildingPlanner::maxCombatEnemy = 1;
+float BuildingPlanner::maxCombatTotal = 1;
 
 //Deprecated
 void BuildingPlanner::plannerOnFrame(){
@@ -30,10 +31,13 @@ BWAPI::UnitType BuildingPlanner::chooseBetweenMilitary(std::vector<TechNode> sel
 	BWAPI::UnitType selected;
 	float priority = 0;
 	for (auto ut : selection){
-		float tempPriority = combatValue(ut)/maxCombat * 100 + specialValue(ut);//To be made dynamic later with military manager
-		tempPriority += specialValue(ut);
+		if (/*Broodwar->self()->minerals() < ut.selfType.mineralPrice() ||*/ Broodwar->self()->gas() < ut.selfType.gasPrice()){
+			continue;
+		}
+		float tempPriority = combatValue(ut)/maxCombat * 100 + specialValue(ut,true);//To be made dynamic later with military manager
+		//tempPriority += specialValue(ut);
 		if (tempPriority > priority){
-			tempPriority = priority;
+			priority = tempPriority;
 			selected = ut.selfType;
 		}
 	}
@@ -90,7 +94,7 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 	supplier.priority = econValue(InformationManager::ourRace.getSupplyProvider());
 	supplier.unitType = InformationManager::ourRace.getSupplyProvider();
 	supplier.declaration = TypeDec::UnitDec;
-	if (supplier.priority > 50 && Broodwar->self()->supplyTotal() != 400){
+	if (supplier.priority > 50 && Broodwar->self()->supplyTotal() != 400 && Broodwar->self()->incompleteUnitCount(InformationManager::ourRace.getSupplyProvider()) < 1){
 		finalOrder.push_back(supplier);
 	}
 	for (auto u : Broodwar->self()->getUnits()){
@@ -226,10 +230,35 @@ std::vector<Priority> BuildingPlanner::order(std::vector<Priority> military, std
 		}
 	}
 
+	if (Broodwar->self()->completedUnitCount(InformationManager::ourRace.getCenter()) > 1){
+		/*if (Broodwar->self()->completedUnitCount(InformationManager::ourRace.getRefinery()) < Broodwar->self()->completedUnitCount(InformationManager::ourRace.getCenter())){
+
+			Priority temp;
+			temp.declaration = TypeDec::UnitDec;
+			temp.priority = 0;
+			temp.unitType = InformationManager::ourRace.getRefinery();
+			finalOrder.push_back(temp);
+		}
+		else {
+
+			Priority temp;
+			temp.declaration = TypeDec::UnitDec;
+			temp.priority = 0;
+			temp.unitType = InformationManager::ourRace.getCenter();
+			finalOrder.push_back(temp);
+		}*///For the fix on refineries.
+		Priority temp;
+		temp.declaration = TypeDec::UnitDec;
+		temp.priority = 0;
+		temp.unitType = InformationManager::ourRace.getCenter();
+		finalOrder.push_back(temp);
+	}
+
 	return finalOrder;
 }
 
 std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CODE'S MAIN FUNCTION.
+	maxCombatTotal = 1;
 	maxCombat = 1;
 	for (auto ot : InformationManager::ourTech){
 		float val = combatValue(ot);
@@ -243,6 +272,11 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 		if (val > maxCombatEnemy){
 			maxCombatEnemy = val;
 		}
+	}
+	if (maxCombatEnemy > 1){
+		maxCombatTotal = (maxCombat + maxCombatEnemy) / 2;
+		maxCombat = maxCombatTotal;
+		maxCombatEnemy = maxCombatTotal;
 	}
 
 	std::vector<Priority> economy;
@@ -284,7 +318,7 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 							//Debug::errorLogMessages("This shouldn't be called atm");
 							UnitType tempType = chooseBetweenMilitary(toSelectFrom);
 							Priority temp;
-							temp.priority = combatValue(tempType)/maxCombat*100 + specialValue(tempType);
+							temp.priority = combatValue(tempType)/maxCombat*100 + specialValue(tempType,true);
 							temp.unitType = tempType;
 							temp.declaration = TypeDec::UnitDec;
 							military.push_back(temp);
@@ -301,11 +335,11 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 	}//End of Production buildings
 
 	if (Broodwar->self()->getRace() == BWAPI::Races::Zerg){
+		std::vector<TechNode> toSelectFrom;
 		for (auto ut : BWAPI::UnitTypes::Zerg_Larva.buildsWhat()){//This unit builds x...
 			if (ut == BWAPI::UnitTypes::Zerg_Drone ||ut == BWAPI::UnitTypes::Zerg_Overlord){
 				continue;
 			}
-			std::vector<TechNode> toSelectFrom;
 			for (auto ot : InformationManager::ourTech){//Which is represented somewhere in ourTech...
 				if (ot.selfType == ut){//Which has now been found.
 					bool exists = true;
@@ -321,14 +355,24 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 					break;
 				}
 			}
-			if (!toSelectFrom.empty()){
-				//Debug::errorLogMessages("This shouldn't be called atm");
-				UnitType tempType = chooseBetweenMilitary(toSelectFrom);
-				Priority temp;
-				temp.priority = combatValue(tempType)/maxCombat * 100 + specialValue(tempType);
-				temp.unitType = tempType;
-				temp.declaration = TypeDec::UnitDec;
-				military.push_back(temp);
+		}
+
+		if (!toSelectFrom.empty()){
+			//Debug::errorLogMessages("This shouldn't be called atm");
+			UnitType tempType = chooseBetweenMilitary(toSelectFrom);
+			Priority temp;
+			temp.priority = combatValue(tempType) / maxCombat * 100 + specialValue(tempType,true);
+			temp.unitType = tempType;
+			temp.declaration = TypeDec::UnitDec;
+			military.push_back(temp);
+			if (tempType == UnitTypes::Zerg_Zergling){
+				//Broodwar << "Just another Zerglin' " << std::to_string(toSelectFrom.size()) << std::endl;
+				std::vector<std::string> larvaCanProduce;
+				larvaCanProduce.push_back(" ");
+				for (auto ut : toSelectFrom){
+					larvaCanProduce.push_back(ut.selfType.getName() + std::to_string(combatValue(ut)/maxCombat*100+specialValue(ut,true)));
+				}
+				Debug::writeLog(larvaCanProduce,"selectfrom","test");
 			}
 		}
 	}
@@ -368,7 +412,7 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 
 	std::vector<float> specialValuetoID = *new std::vector<float>();
 	for (auto ot : InformationManager::ourTech){
-		int val = specialValue(ot);
+		int val = specialValue(ot,true);
 		specialValuetoID.push_back(val);
 	}
 
@@ -393,6 +437,17 @@ std::vector<Priority> BuildingPlanner::findOrder(){//CURRENT REFACTOR OF THIS CO
 	technology.priority = max;
 	technology.unitType = techSelect;
 	technology.declaration = TypeDec::UnitDec;
+
+	if (Broodwar->self()->getRace() == BWAPI::Races::Zerg){
+		Priority worker;
+		worker.priority = econValue(InformationManager::ourRace.getWorker());
+		worker.unitType = InformationManager::ourRace.getWorker();
+		worker.declaration = TypeDec::UnitDec;
+		if (InformationManager::workerUnits.size() <= 50){
+			economy.push_back(worker);
+
+		}
+	}
 
 	Priority center;
 	center.priority = econValue(InformationManager::ourRace.getCenter());
@@ -447,6 +502,9 @@ float BuildingPlanner::combatValue(UnitType toAnalyze){
 	if (toAnalyze == BWAPI::UnitTypes::Protoss_Carrier){//Same as reaver
 		return 200;
 	}
+	if (toAnalyze == BWAPI::UnitTypes::Terran_Barracks){
+		return 100;
+	}
 	if (toAnalyze.groundWeapon() == BWAPI::WeaponTypes::None){
 		return 0;
 	}
@@ -499,8 +557,8 @@ float BuildingPlanner::econValue(UnitType toAnalyze){
 		return F / toDivide; //Formula: F / (Minerals in regions we own - probes we own + 0.1). +0.1 to avoid division by zero.
 	}
 	if (Broodwar->self()->getRace().getWorker().getName() == toAnalyze.getName()){//Worker
-		int count = Broodwar->self()->completedUnitCount(Broodwar->self()->getRace().getCenter());
-		int count2 = Broodwar->self()->completedUnitCount(Broodwar->self()->getRace().getWorker());
+		int count = Broodwar->self()->completedUnitCount(Broodwar->self()->getRace().getCenter());//BUG: Takes the number of all completed, not currently existing
+		int count2 = InformationManager::workerUnits.size();
 		if (count2 > 21*count ||count2>50){
 			return 0;
 		}
@@ -518,62 +576,120 @@ float BuildingPlanner::econValue(UnitType toAnalyze){
 	return 0;
 }
 
-float BuildingPlanner::specialValue(TechNode toAnalyze){//TODO: Implement Not Needed and Needed values.
-	return specialValue(toAnalyze.selfType);
+float BuildingPlanner::specialValue(TechNode toAnalyze, bool ally){//TODO: Implement Not Needed and Needed values.
+	return specialValue(toAnalyze.selfType, ally);
 }
 
-float BuildingPlanner::specialValue(UnitType toAnalyze){//TODO: Implement Not Needed and Needed values.
+float BuildingPlanner::specialValue(UnitType toAnalyze, bool ally){//TODO: Implement Not Needed and Needed values.
 	float val = 0;
-	if (toAnalyze.isBuilding()){//Counts as defensive/static
-		if (toAnalyze.isDetector()){//Defensive detector
-			val += 10; //Satiated value.
-		}
-		if (toAnalyze.canAttack() || toAnalyze == BWAPI::UnitTypes::Terran_Bunker){//Defensive turret
-			val += 10; //Satiated value.
-		}
-	}
-	else {
-		if (toAnalyze.isCloakable() || toAnalyze.hasPermanentCloak()){//Stealth unit
-			val += 25;
-		}
-		if (toAnalyze.isDetector()){
-			if (enemyStealth == SpecialReq::NotNeeded){
-				val += 10;
+	if (ally){
+		if (toAnalyze.isBuilding()){//Counts as defensive/static
+			if (toAnalyze.isDetector()){//Defensive detector
+				val += 10; //Satiated value.
 			}
-			else if (enemyStealth == SpecialReq::Needed){
-				val += 500;
+			if (toAnalyze.canAttack() || toAnalyze == BWAPI::UnitTypes::Terran_Bunker){//Defensive turret
+				val += 10; //Satiated value.
 			}
-			else {
+		}
+		else {
+			if (toAnalyze.isCloakable() || toAnalyze.hasPermanentCloak()){//Stealth unit
 				val += 25;
 			}
-		}
-		if (toAnalyze.groundWeapon() != BWAPI::WeaponTypes::None){//If can attack ground!
-			if (toAnalyze.groundWeapon().maxRange() / 32 >= 6){
-				val += 25;
-			}
-
-			if (toAnalyze.groundWeapon().maxRange() / 32 >= 4 && toAnalyze.topSpeed() > 5){//Temporary functionality - Should be relative to enemy kiteability
-				val += 10;
-			}
-
-			if (toAnalyze.isFlyer()){//Air VS Ground
-				val += 10;
-				if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Air VS Air
-					val += 0;
+			if (toAnalyze.isDetector()){
+				if (enemyStealth == SpecialReq::NotNeeded){
+					val += 10;
+				}
+				else if (enemyStealth == SpecialReq::Needed){
+					val += 500;
+				}
+				else {
+					val += 25;
 				}
 			}
-			else {//Ground unit
-				if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Ground VS Air
+			if (toAnalyze.groundWeapon() != BWAPI::WeaponTypes::None){//If can attack ground!
+				if (toAnalyze.groundWeapon().maxRange() / 32 >= 6){
+					val += 25;
+				}
+
+				if (toAnalyze.groundWeapon().maxRange() / 32 >= 4 && toAnalyze.topSpeed() > 5){//Temporary functionality - Should be relative to enemy kiteability
+					val += 10;
+				}
+
+				if (toAnalyze.isFlyer()){//Air VS Ground
+					val += 10;
+					if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Air VS Air
+						val += 0;
+					}
+				}
+				else {//Ground unit
+					if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Ground VS Air
+						val += 10;
+					}
+				}
+			}
+			else if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){
+				if (toAnalyze.isFlyer()){// Air VS Air
+					val += 0;
+				}
+				else { //Ground VS Air
 					val += 10;
 				}
 			}
 		}
-		else if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){
-			if (toAnalyze.isFlyer()){// Air VS Air
-				val += 0;
+	}
+	else {
+		if (toAnalyze.isBuilding()){//Counts as defensive/static
+			if (toAnalyze.isDetector()){//Defensive detector
+				val += 10; //Satiated value.
 			}
-			else { //Ground VS Air
-				val += 10;
+			if (toAnalyze.canAttack() || toAnalyze == BWAPI::UnitTypes::Terran_Bunker){//Defensive turret
+				val += 10; //Satiated value.
+			}
+		}
+		else {
+			if (toAnalyze.isCloakable() || toAnalyze.hasPermanentCloak()){//Stealth unit
+				if (enemyStealth == SpecialReq::NotNeeded){//Doesn't make sense, but I'll keep it just to make sure)
+					val += 10;
+				}
+				else if (enemyStealth == SpecialReq::Needed){
+					val += 500;
+				}
+				else {
+					val += 25;
+				}
+			}
+			if (toAnalyze.isDetector()){
+				
+				val += 25;
+			}
+			if (toAnalyze.groundWeapon() != BWAPI::WeaponTypes::None){//If can attack ground!
+				if (toAnalyze.groundWeapon().maxRange() / 32 >= 6){
+					val += 25;
+				}
+
+				if (toAnalyze.groundWeapon().maxRange() / 32 >= 4 && toAnalyze.topSpeed() > 5){//Temporary functionality - Should be relative to enemy kiteability
+					val += 10;
+				}
+
+				if (toAnalyze.isFlyer()){//Air VS Ground
+					val += 10;
+					if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Air VS Air
+						val += 0;
+					}
+				}
+				else {//Ground unit
+					if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Ground VS Air
+						val += 10;
+					}
+				}
+			}
+			else if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){
+				if (toAnalyze.isFlyer()){// Air VS Air
+					val += 0;
+				}
+				else { //Ground VS Air
+					val += 10;
+				}
 			}
 		}
 	}
@@ -669,7 +785,7 @@ std::vector<Priority> BuildingPlanner::makePlanN(){
 	std::vector<float> specialValuetoID = *new std::vector<float>();
 	debug = *new std::vector<std::string>();
 	for (auto ot : InformationManager::ourTech){
-		int val = specialValue(ot);
+		int val = specialValue(ot, true);
 		specialValuetoID.push_back(val);
 		debug.push_back("The unit: " + ot.selfType.getName() + " was given value [" + std::to_string(val) + "]");
 	}

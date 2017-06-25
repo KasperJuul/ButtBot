@@ -32,13 +32,15 @@ class BuildingPlanner{
 public:
 	static float maxCombat;
 	static float maxCombatEnemy;
+	static float maxCombatTotal;
 	static SpecialReq enemyStealth;
+	//static SpecialReq enemyAir;
 	static BWAPI::UnitType chooseBetweenMilitary(std::vector<TechNode> selection);
 	static std::vector<float> techValue(std::vector<int> possibleNodes, std::vector<int> futureNodes, std::vector<float> totalValue);
 	static std::vector<Priority> order(std::vector<Priority> military, std::vector<Priority> economy, Priority technology);
 	static std::vector<Priority> findOrder();
-	static float specialValue(TechNode toAnalyze);//Depcrecated
-	static float specialValue(UnitType toAnalyze);
+	static float specialValue(TechNode toAnalyze, bool ally);//Depcrecated
+	static float specialValue(UnitType toAnalyze, bool ally);
 	static float econValue(TechNode toAnalyze);//Depcrecated
 	static float econValue(UnitType toAnalyze);
 	static float combatValue(TechNode toAnalyze);//Depcrecated

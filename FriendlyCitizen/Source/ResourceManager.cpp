@@ -227,7 +227,7 @@ float ResourceManager::workTime(Unit unit, mineralPatch m, int n){
 	}
 	float dist = (float)((unit->getDistance(m.unit)) / (unit->getType().topSpeed()));
 	float W = std::max(0.0f, dist - sum) + miningTimeConstant;
-	log += "	Work(W) = MAX(0, " + std::to_string(dist) + " - " + std::to_string(sum) + ") + " + std::to_string(miningTimeConstant) + " = " + std::to_string(W) + "\n";
+	//log += "	Work(W) = MAX(0, " + std::to_string(dist) + " - " + std::to_string(sum) + ") + " + std::to_string(miningTimeConstant) + " = " + std::to_string(W) + "\n";
 	return W;
 }
 
@@ -258,7 +258,7 @@ float ResourceManager::roundTrip(Unit unit, mineralPatch* m){
 	float derp = workTime(*m);
 	float R = distance_UtoM + std::max(0.0f, derp - distance_UtoM) + miningTimeConstant + distance_MtoD;
 
-	log += "	R(W,M) = " + std::to_string(distance_UtoM) + " + MAX(0, " + std::to_string(derp) + " - " + std::to_string(distance_UtoM) + ") + " + std::to_string(miningTimeConstant) + " + " + std::to_string(distance_MtoD) + " = " + std::to_string(R) + "\n";
+	//log += "	R(W,M) = " + std::to_string(distance_UtoM) + " + MAX(0, " + std::to_string(derp) + " - " + std::to_string(distance_UtoM) + ") + " + std::to_string(miningTimeConstant) + " + " + std::to_string(distance_MtoD) + " = " + std::to_string(R) + "\n";
 	return R;
 }
 

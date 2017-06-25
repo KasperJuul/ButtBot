@@ -106,8 +106,10 @@ void FriendlyCitizen::onEnd(bool isWinner)
 		temp += "\nThis unit exists: " + std::to_string(InformationManager::ourTech.at(i).exists);
 		Debug::writeLog(temp.c_str(), InformationManager::ourTech.at(i).selfType.getName().c_str(), InformationManager::ourRace.getName().c_str());
 	}
-	Debug::writeLog(ResourceManager::log, "QueueLog", "Logs");
-	Debug::writeLog(FriendlyCitizen::minelog, "minLog", "Logs");
+
+	Debug::writeLog(std::to_string(InformationManager::ourTech.size()).c_str(), "techsize", InformationManager::ourRace.getName().c_str());
+	//Debug::writeLog(ResourceManager::log, "QueueLog", "Logs");
+	//Debug::writeLog(FriendlyCitizen::minelog, "minLog", "Logs");
 
 	std::string temp2 = "Upgrades:\n";
 	for (auto t : InformationManager::upgradeList){
