@@ -176,7 +176,7 @@ BWAPI::Unit MiliHTN::chooseTarget(BWAPI::Unit attacker, std::set<BWAPI::Unit> ta
 		if (!u->getType().isFlyer() && attacker->getType().groundWeapon().damageAmount() < 1 && attacker->getType() != BWAPI::UnitTypes::Protoss_Reaver && attacker->getType() != BWAPI::UnitTypes::Protoss_Carrier){
 			continue;
 		}
-		if (u->isCloaked()){
+		if (u->isCloaked() || u->isBurrowed()){
 			bool detector = false;
 			for (auto ally : Broodwar->getUnitsInRadius(u->getPosition(),384,BWAPI::Filter::IsAlly)){
 				if (!ally->getType().isDetector()){

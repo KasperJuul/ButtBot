@@ -16,7 +16,7 @@ std::vector<int> MilitaryManager::allyRegions;
 void enemyAnalyze(){
 	BuildingPlanner::enemyStealth = SpecialReq::NotNeeded;
 	for (auto eu : InformationManager::enemyUnits){
-		if (eu.selfType.isCloakable() || eu.selfType.hasPermanentCloak()){
+		if (eu.selfType.isCloakable() || eu.selfType.hasPermanentCloak() || eu.selfType.isBurrowable() && eu.selfType != BWAPI::UnitTypes::Terran_Vulture_Spider_Mine){
 			bool detector = false;
 			for (auto u : Broodwar->self()->getUnits()){
 				if (u->getType().isDetector()){
@@ -123,7 +123,7 @@ void MilitaryManager::onFrame(){
 	switch (mainState){
 	case MainStates::Defensive:
 	{
-								  if (theirStrength*1.4 < ourStrength){
+								  if (theirStrength*1.7 < ourStrength){
 									  mainState = MainStates::Offensive; 
 									  for (int i = 0; i < InformationManager::militaryUnits.size(); i++){//Deassign
 										  InformationManager::militaryUnits.at(i)->placement = -1;
@@ -169,7 +169,7 @@ void MilitaryManager::onFrame(){
 
 	case MainStates::Offensive:
 	{
-								  if (theirStrength*0.8 > ourStrength){
+								  if (theirStrength*1.1 > ourStrength){
 									  mainState = MainStates::Defensive;
 									  break;
 								  }
@@ -208,10 +208,10 @@ void MilitaryManager::onFrame(){
 								  std::vector<MilitaryUnit*> weakenedUnits;
 								  for (auto mu : InformationManager::militaryUnits){
 									  float ourLocalStrength = 0;
-									  for (auto u : Broodwar->getUnitsInRadius(mu->unit->getPosition(), 200, BWAPI::Filter::IsAlly)){
+									  for (auto u : Broodwar->getUnitsInRadius(mu->unit->getPosition(), 384, BWAPI::Filter::IsAlly)){
 										  ourLocalStrength += BuildingPlanner::combatValue(u->getType()) / BuildingPlanner::maxCombat * 100 + BuildingPlanner::specialValue(u->getType(),false);
 									  }
-									  if (ourLocalStrength > ourStrength*0.5){
+									  if (ourLocalStrength > ourStrength*0.6 ||ourLocalStrength > theirStrength*1.4){
 										  empoweredUnits.push_back(mu);
 									  }
 									  else {
