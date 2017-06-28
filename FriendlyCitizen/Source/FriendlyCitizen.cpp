@@ -338,6 +338,35 @@ void FriendlyCitizen::onUnitCreate(BWAPI::Unit unit)
 
 void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 {
+	if (unit->getType().isWorker()){
+		int witr = 0;
+		for (auto w : InformationManager::workerUnits){
+			if (w->unit == unit){
+				if (w->mineral == NULL){
+					continue;
+				}
+
+				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
+					if (w->mineral->workers.at(i) = w->unit){
+						w->mineral->workers.erase(w->mineral->workers.begin() + i);
+						w->inQ = false;
+						w->returningCargo = false;
+						w->state = 0;
+					}
+				}
+				if (w->builder){
+					InformationManager::reservedMinerals -= w->buildingProject.mineralPrice();
+					InformationManager::reservedGas -= w->buildingProject.gasPrice();
+					BuildingPlacer::releaseBuilder(w);
+					Broodwar << "Released dying buildier" << std::endl;
+				}
+				InformationManager::workerUnits.erase(InformationManager::workerUnits.begin() + witr);
+			}
+			witr++;
+		}
+	}
+
+
 	InformationManager::OnUnitDestroy(unit);
 
 	if (unit->getType().isMineralField()){
@@ -362,24 +391,7 @@ void FriendlyCitizen::onUnitDestroy(BWAPI::Unit unit)
 		}
 	}
 
-	if (unit->getType().isWorker()){
-		int witr = 0;
-		for (auto w : InformationManager::workerUnits){
-			if (w->unit == unit){
-				for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
-					if (w->mineral->workers.at(i) = w->unit){
-						w->mineral->workers.erase(w->mineral->workers.begin() + i);
-						w->inQ = false;
-						w->returningCargo = false;
-						w->state = 0;
-					}
-				}
-				InformationManager::workerUnits.erase(InformationManager::workerUnits.begin() + witr);
-			}
-			witr++;
-		}
-	}
-
+	
 	InformationManager::regionAnalyze();
 
 }

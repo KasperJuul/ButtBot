@@ -151,14 +151,20 @@ void MiliHTN::defend(MilitaryUnit defender, std::set<BWAPI::Unit> targets){
 		else {
 
 			int realPlacement = defender.placement;
-			if (defender.placement > MilitaryManager::allyRegions.size()){
+			if (defender.placement >= MilitaryManager::allyRegions.size()){
 				realPlacement -= MilitaryManager::allyRegions.size();
+				if (realPlacement > MilitaryManager::allyRegions.size()){
+					return;
+				}
 				BWAPI::Position pos = InformationManager::regions.at(MilitaryManager::disputedRegions.at(realPlacement)).self->getCenter();
 				defender.unit->move(pos);
 			}
-			else {
-				BWAPI::Position pos = InformationManager::regions.at(MilitaryManager::allyRegions.at(realPlacement)).self->getCenter();
-				defender.unit->move(pos);
+			else if(realPlacement >= 0 && realPlacement < MilitaryManager::allyRegions.size()) {
+				int index = MilitaryManager::allyRegions.at(realPlacement);
+				if (index >= 0 && index < InformationManager::regions.size()){
+					BWAPI::Position pos = InformationManager::regions.at(index).self->getCenter();
+					defender.unit->move(pos);
+				}
 
 			}
 		}
@@ -170,23 +176,29 @@ BWAPI::Unit MiliHTN::chooseTarget(BWAPI::Unit attacker, std::set<BWAPI::Unit> ta
 	double min = DBL_MAX;
 	BWAPI::Unit bestTarget;
 	for (auto u : targets){
-		if (u->getType().isFlyer() && attacker->getType().airWeapon().damageAmount() < 1 && attacker->getType() != BWAPI::UnitTypes::Protoss_Carrier){
-			continue;
+		if (u->getType().isAddon()){
+
 		}
-		if (!u->getType().isFlyer() && attacker->getType().groundWeapon().damageAmount() < 1 && attacker->getType() != BWAPI::UnitTypes::Protoss_Reaver && attacker->getType() != BWAPI::UnitTypes::Protoss_Carrier){
-			continue;
-		}
-		if (u->isCloaked() || u->isBurrowed()){
-			bool detector = false;
-			for (auto ally : Broodwar->getUnitsInRadius(u->getPosition(),384,BWAPI::Filter::IsAlly)){
-				if (!ally->getType().isDetector()){
-					detector = true;
-					break;
-				}
-			}
-			if (!detector){
+		else {
+			if (u->getType().isFlyer() && attacker->getType().airWeapon().damageAmount() < 1 && attacker->getType() != BWAPI::UnitTypes::Protoss_Carrier){
 				continue;
 			}
+			if (!u->getType().isFlyer() && attacker->getType().groundWeapon().damageAmount() < 1 && attacker->getType() != BWAPI::UnitTypes::Protoss_Reaver && attacker->getType() != BWAPI::UnitTypes::Protoss_Carrier){
+				continue;
+			}
+			if (u->isCloaked() || u->isBurrowed()){
+				bool detector = false;
+				for (auto ally : Broodwar->getUnitsInRadius(u->getPosition(), 384, BWAPI::Filter::IsAlly)){
+					if (ally->getType().isDetector()){
+						detector = true;
+						break;
+					}
+				}
+				if (!detector){
+					continue;
+				}
+			}
+
 		}
 
 		double damage = u->getType().groundWeapon().damageAmount() + u->getType().airWeapon().damageAmount();
@@ -196,7 +208,7 @@ BWAPI::Unit MiliHTN::chooseTarget(BWAPI::Unit attacker, std::set<BWAPI::Unit> ta
 
 		//Exception types
 		if (u->getType() == BWAPI::UnitTypes::Terran_Barracks){
-			damage = 10;
+			damage = BWAPI::UnitTypes::Terran_Marine.groundWeapon().damageAmount()*2 + BWAPI::UnitTypes::Terran_Marine.airWeapon().damageAmount()*2;
 		}
 		if (u->getType() == BWAPI::UnitTypes::Protoss_Carrier){
 			damage = 10;
@@ -205,7 +217,7 @@ BWAPI::Unit MiliHTN::chooseTarget(BWAPI::Unit attacker, std::set<BWAPI::Unit> ta
 			damage = 10;
 		}
 
-		double val = u->getDistance(attacker)/damage - damage / (double)(u->getHitPoints() + u->getShields());
+		double val = u->getDistance(attacker)*2/damage - damage / (double)(u->getHitPoints() + u->getShields());
 		if (val < min){
 			min = val;
 			bestTarget = u;

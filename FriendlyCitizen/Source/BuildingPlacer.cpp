@@ -111,7 +111,7 @@ void BuildingPlacer::onFrame(){
 			}
 			else{
 				for (auto &u : Broodwar->self()->getUnits()){
-					if (u->canTrain(build.unitType) && u->isIdle()){
+					if (u->canTrain(build.unitType) && !u->isTraining()){
 						if (Broodwar->self()->supplyTotal() - Broodwar->self()->supplyUsed() - build.unitType.supplyRequired() >= 0){
 							u->train(build.unitType);
 						}
@@ -288,12 +288,23 @@ TilePosition BuildingPlacer::getBuildTile(UnitType buildingType, TilePosition ar
 	if (buildingType.isRefinery()) {
 		for (auto c : InformationManager::productionBuildings){
 			if (c->unit->getType().isResourceDepot()){
-				if (c->unit->getRegion()->getUnits(Filter::IsRefinery).size() == 0 && BWTA::getNearestBaseLocation(c->unit->getPosition())->getGeysers().size() <= 1){
-					BWAPI::Unitset geysers = BWTA::getNearestBaseLocation(c->unit->getPosition())->getGeysers();
-					for (auto g : geysers){
-						return g->getTilePosition();
+				for (auto g : Broodwar->getGeysers()){
+					if (BWTA::getNearestBaseLocation(c->unit->getPosition()) == BWTA::getNearestBaseLocation(g->getPosition())){
+						if (g->getType() != InformationManager::ourRace.getRefinery()){
+							return g->getTilePosition();
+						}
 					}
 				}
+
+
+				/*if (c->unit->getRegion()->getUnits(Filter::IsRefinery).size() == 0 && BWTA::getNearestBaseLocation(c->unit->getPosition())->getGeysers().size() >= 1){
+					BWAPI::Unitset geysers = BWTA::getNearestBaseLocation(c->unit->getPosition())->getGeysers();
+					for (auto g : geysers){
+						if (g->getType() != InformationManager::ourRace.getRefinery()){
+							return g->getTilePosition();
+						}
+					}
+				}*/
 			}
 		}
 		return ret; //Broodwar->getBuildLocation(InformationManager::ourRace.getRefinery(), InformationManager::firstCenter->getTilePosition());

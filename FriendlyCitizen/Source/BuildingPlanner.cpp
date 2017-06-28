@@ -8,6 +8,7 @@
 std::string BuildingPlanner::plan;
 
 SpecialReq BuildingPlanner::enemyStealth = SpecialReq::NotNeeded;
+SpecialReq BuildingPlanner::enemyAir = SpecialReq::NotNeeded;
 float BuildingPlanner::econ = 0;
 float BuildingPlanner::mili = 0;
 float BuildingPlanner::tech = 0;
@@ -631,12 +632,30 @@ float BuildingPlanner::specialValue(UnitType toAnalyze, bool ally){//TODO: Imple
 				if (toAnalyze.isFlyer()){//Air VS Ground
 					val += 10;
 					if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Air VS Air
-						val += 0;
+						if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Ground VS Air
+							if (enemyAir == SpecialReq::NotNeeded){
+								val += 0;
+							}
+							else if (enemyAir == SpecialReq::Needed){
+								val += 200;
+							}
+							else {
+								val += 0;
+							}
+						}
 					}
 				}
 				else {//Ground unit
 					if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Ground VS Air
-						val += 10;
+						if (enemyAir == SpecialReq::NotNeeded){
+							val += 10;
+						}
+						else if (enemyAir == SpecialReq::Needed){
+							val += 500;
+						}
+						else {
+							val += 25;
+						}
 					}
 				}
 			}
@@ -685,7 +704,15 @@ float BuildingPlanner::specialValue(UnitType toAnalyze, bool ally){//TODO: Imple
 				}
 
 				if (toAnalyze.isFlyer()){//Air VS Ground
-					val += 10;
+					if (enemyAir == SpecialReq::NotNeeded){//Doesn't make sense, but I'll keep it just to make sure)
+						val += 10;
+					}
+					else if (enemyAir == SpecialReq::Needed){
+						val += 300;
+					}
+					else {
+						val += 10;
+					}
 					if (toAnalyze.airWeapon() != BWAPI::WeaponTypes::None){//Air VS Air
 						val += 0;
 					}

@@ -551,9 +551,9 @@ void InformationManager::OnUnitDestroy(Unit unit){
 		}
 		if (!hasStillType){
 			InformationManager::ourUnitTypes.erase(unit->getType());
-			for (auto ot : InformationManager::ourTech){
-				if (ot.selfType == unit->getType()){
-					ot.exists = false;
+			for (int i = 0; i < ourTech.size(); i++){
+				if (ourTech.at(i).selfType == unit->getType()){
+					ourTech.at(i).exists = false;
 				}
 			}
 		}

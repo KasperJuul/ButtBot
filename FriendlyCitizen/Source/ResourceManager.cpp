@@ -67,15 +67,116 @@ void ResourceManager::stdGather(){
 }
 
 void ResourceManager::gasGather(){
+	InformationManager::regionAnalyze();
 	if (Broodwar->self()->completedUnitCount(InformationManager::ourRace.getRefinery()) > 0){
 		int gasworkers = 0;
 		for (auto w : InformationManager::workerUnits){
 			if (w->unit->isConstructing()){ continue; }
 			if (w->gasworker){
+				Broodwar->drawCircleMap(w->unit->getPosition(),32,BWAPI::Colors::Blue,false);
 				gasworkers++;
-			}
-			else if (gasworkers < 3){
-				if (!w->builder && !w->isScout){
+				if (w->state == -1){
+					//We need to find what region to assign the unit.
+					int i2 = 0;
+					int counter = 0;
+					for (int i3 = 0; i3 < InformationManager::workerUnits.size(); i3++){
+						if (InformationManager::workerUnits.at(i3)->gasworker && i2 == InformationManager::workerUnits.at(i3)->state){
+							counter++;
+						}
+						if (counter == 3){
+							counter = 0;
+							i3 = 0;
+							i2++;
+						}
+						//Broodwar << "Quick check" << std::endl;
+						if (i3 == InformationManager::workerUnits.size()-1 && InformationManager::regions.size() > i2){
+							//Does the region i2 contain a refinery?
+							RegionStruct internalRegion = InformationManager::regions.at(i2);
+							if (internalRegion.owner == OwningPlayer::Self ||internalRegion.owner == OwningPlayer::Dispute){
+
+								Broodwar->drawLineMap(internalRegion.self->getCenter()
+									, w->unit->getPosition(), BWAPI::Colors::Red);
+								bool contains = false;
+								BWAPI::Region realRegion = Broodwar->getRegionAt(internalRegion.self->getCenter());
+								Broodwar->drawLineMap(realRegion->getCenter()
+									, w->unit->getPosition(), BWAPI::Colors::Yellow);
+								for (auto u : Broodwar->self()->getUnits()){
+									if (u->getPosition().isValid()){
+										if (BWTA::getRegion(u->getPosition()) == NULL){
+											continue;
+										}
+									}
+									else { continue; }
+									if (BWTA::getRegion(u->getPosition())->getCenter() == internalRegion.self->getCenter()){
+										if (u->getType() != InformationManager::ourRace.getRefinery()){
+
+										}
+										else {
+											contains = true;
+											break;
+										}
+									}
+								}
+
+								if (contains){
+									w->state = i2;
+									Broodwar->drawLineMap(internalRegion.self->getCenter()
+										, w->unit->getPosition(), BWAPI::Colors::White);
+									break;
+								}
+							}
+							//Broodwar << std::to_string(Broodwar->self()->completedUnitCount(InformationManager::ourRace.getRefinery()))<< " " << std::to_string(gasworkers)<< std::endl;
+							counter = 0;
+							i3 = 0;
+							i2++;
+							/*bool contains = false;
+							BWAPI::Region realRegion = Broodwar->getRegionAt(internalRegion.self->getCenter());
+							for (auto u : realRegion->getUnits(Filter::IsRefinery)){
+								contains = true;
+								break;
+							}
+							if (!contains){
+								Broodwar << "Our regions do not contain refineries???" << std::endl;
+							}*/
+						//Broodwar->drawLine(BWAPI::CoordinateType::Screen, internalRegion.self->getCenter().x, internalRegion.self->getCenter().y
+							//, w->unit->getPosition().x, w->unit->getPosition().y,BWAPI::Colors::White);
+						}
+					}
+				}//Closure: If w->state == -1
+				else {
+					if (!w->unit->isGatheringGas()){
+						RegionStruct internalRegion = InformationManager::regions.at(w->state);
+						BWAPI::Region realRegion = Broodwar->getRegionAt(internalRegion.self->getCenter());
+
+						Broodwar->drawLineMap(internalRegion.self->getCenter()
+							, w->unit->getPosition(), BWAPI::Colors::White);
+						//Broodwar << "Attempts to gather at position..." << std::to_string(internalRegion.self->getCenter().x) << "," << std::to_string(internalRegion.self->getCenter().y) << std::endl;
+						/*for (auto u : Broodwar->self()->getUnits()){
+							if (u->getPosition().isValid()){
+								if (BWTA::getRegion(u->getPosition()) == NULL){
+									continue;
+								}
+							}
+							else { continue; }
+							if (BWTA::getRegion(u->getPosition())->getCenter() == internalRegion.self->getCenter()){
+								if (u->getType() != InformationManager::ourRace.getRefinery()){
+
+								}
+								else {
+
+									w->unit->gather(u);
+									break;
+								}
+							}
+						}*/
+						w->unit->gather(Broodwar->getClosestUnit(internalRegion.self->getCenter(),BWAPI::Filter::IsRefinery));
+					}
+				}
+			} //Closure: Gasworker
+		}
+		for (auto w : InformationManager::workerUnits){
+			if (gasworkers < 3 * Broodwar->self()->completedUnitCount(InformationManager::ourRace.getRefinery())){
+				if (!w->builder && !w->isScout && !w->gasworker){
 					if (w->inQ){
 						for (unsigned int i = 0; i < w->mineral->workers.size(); i++){
 							if (w->mineral->workers.at(i) = w->unit){
@@ -84,8 +185,8 @@ void ResourceManager::gasGather(){
 							}
 						}
 					}
-					w->unit->gather(w->unit->getClosestUnit(IsRefinery));
-					w->state = 0;
+					//w->unit->gather(w->unit->getClosestUnit(IsRefinery));
+					w->state = -1;
 					w->gasworker = true;
 					w->returningCargo = false;
 					gasworkers++;
@@ -267,7 +368,7 @@ ResourceManager::mineralPatch* ResourceManager::roundTrip_min(Unit unit, std::ve
 	int patchItr = 0;
 	int itr = 0;
 	for (auto m : *patches){
-		if (m->workers.size() > 2){
+		if (m->workers.size() > 1){
 			itr++;
 			continue;
 		}

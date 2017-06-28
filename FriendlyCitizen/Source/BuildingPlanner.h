@@ -34,7 +34,7 @@ public:
 	static float maxCombatEnemy;
 	static float maxCombatTotal;
 	static SpecialReq enemyStealth;
-	//static SpecialReq enemyAir;
+	static SpecialReq enemyAir;
 	static BWAPI::UnitType chooseBetweenMilitary(std::vector<TechNode> selection);
 	static std::vector<float> techValue(std::vector<int> possibleNodes, std::vector<int> futureNodes, std::vector<float> totalValue);
 	static std::vector<Priority> order(std::vector<Priority> military, std::vector<Priority> economy, Priority technology);
